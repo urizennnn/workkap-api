@@ -3,18 +3,16 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
-import {
-  FormatResponseInterceptor,
-  SecurityHeadersInterceptor,
-} from 'libs/common/interceptor';
+import { FormatResponseInterceptor } from 'libs/common/interceptor';
 import { AllExceptionsFilter } from 'libs/common/filter';
 import { WorkkapLogger } from 'libs/common/logger';
+import { SecurityHeadersInterceptor } from 'libs/common/interceptor/security-headers.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   const config = app.get(ConfigService);
-  const logger = app.get(WorkkapLogger);
+  const logger = await app.resolve(WorkkapLogger);
 
   app.use(helmet());
 
@@ -39,4 +37,4 @@ async function bootstrap() {
 
   await app.listen(config.get('port') ?? process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

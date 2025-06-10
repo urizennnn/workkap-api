@@ -95,7 +95,9 @@ export class WorkkapLogger {
     logger.level = level;
     this.logger = logger;
     this.setContext(
-      typeof source === 'string' ? source : (source?.constructor ?? OmniLogger),
+      typeof source === 'string'
+        ? source
+        : (source?.constructor ?? WorkkapLogger),
     );
   }
 
