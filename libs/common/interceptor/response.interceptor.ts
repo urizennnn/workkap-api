@@ -12,12 +12,13 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 export class FormatResponseInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((data) => ({
+      map((data: unknown) => ({
         status: 'success',
         data,
       })),
-      catchError((err) => {
-        const message = err.message || 'Internal server error';
+      catchError((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : 'Internal server error';
 
         if (err instanceof HttpException) {
           const status = err.getStatus();
