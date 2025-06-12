@@ -19,6 +19,7 @@ model User {
     email              String?            @unique
     password           String?
     country            String?
+    profilePictureUrl  String?
     username           String?            @unique
     fullName           String?
     registrationMethod RegistrationMethod @default(COMBINATION)

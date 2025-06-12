@@ -24,6 +24,7 @@ export const appConfigFactory = registerAs('app', () => {
     jwt: {
       secret: env.jwt_secret,
       expires_in: env.jwt_expires_in,
+      refresh_expires_in: env.jwt_refresh_expires_in,
     },
     db: {
       url: env.database_url,

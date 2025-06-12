@@ -2,13 +2,20 @@ import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerModule, WorkkapMiddlewareLogger } from 'libs/common/logger';
-import { ConfigModule } from '@nestjs/config';
-import { appConfigFactory } from 'libs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { appConfigFactory, pickFrom } from 'libs/config';
 import { UserModule } from './user/user.module';
+import { GlobalJWTModule } from 'libs/auth/jwt/jwt.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [appConfigFactory] }),
+    GlobalJWTModule.initAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: pickFrom(config, 'jwt.secret', 'app'),
+      }),
+    }),
     LoggerModule,
     UserModule,
   ],

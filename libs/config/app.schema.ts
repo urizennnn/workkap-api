@@ -49,4 +49,8 @@ export class AppConfigSchema {
   @IsOptional()
   @IsString()
   log_level: string = 'debug';
+
+  @Expose({ name: 'JWT_REFRESH_EXPIRES_IN' })
+  @IsString()
+  jwt_refresh_expires_in!: string;
 }
