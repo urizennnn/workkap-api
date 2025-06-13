@@ -2,14 +2,15 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { Strategy, Profile } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
+import { pickFrom } from 'libs/config';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
     super({
-      clientID: configService.get<string>('google.client_id'),
-      clientSecret: configService.get<string>('google.client_secret'),
-      callbackURL: configService.get<string>('google.callback_url'),
+      clientID: pickFrom(configService, 'google.client_id', 'app'),
+      clientSecret: pickFrom(configService, 'google.client_secret', 'app'),
+      callbackURL: pickFrom(configService, 'google.callback_url', 'app'),
       scope: ['profile', 'email'],
     });
   }
@@ -18,17 +19,20 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     accessToken: string,
     refreshToken: string,
     profile: Profile,
-    done: (err: any, user: any, info?: any) => void,
-  ): void {
-    const { name, emails, photos } = profile;
-    const user = {
-      email: emails && emails[0]?.value,
-      fullName:
-        name?.givenName || name?.familyName
-          ? `${name?.givenName ?? ''} ${name?.familyName ?? ''}`.trim()
-          : profile.displayName,
-      profilePictureUrl: photos && photos[0]?.value,
-    };
-    done(null, user);
+  ): {
+    email: string;
+    fullName: string;
+    profilePictureUrl: string | undefined;
+  } {
+    const email = profile.emails?.[0]?.value ?? '';
+
+    const given = profile.name?.givenName ?? '';
+    const family = profile.name?.familyName ?? '';
+    const fullName =
+      given || family ? `${given} ${family}`.trim() : profile.displayName;
+
+    const profilePictureUrl = profile.photos?.[0]?.value;
+
+    return { email, fullName, profilePictureUrl };
   }
 }

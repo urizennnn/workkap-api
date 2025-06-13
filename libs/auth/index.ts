@@ -1,2 +1,2 @@
-export * from './jwt';
+export * from './jwt/index';
 export * from './google';

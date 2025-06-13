@@ -1,4 +1,5 @@
 import { Body, Controller, Post, Get, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { Google } from 'libs/auth/google';
 import { UserService } from './user.service';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
@@ -27,7 +28,7 @@ export class UserController {
 
   @Get('login/google/redirect')
   @Google()
-  async googleLoginRedirect(@Req() req: any) {
-    return this.userService.loginWithGoogle(req.user);
+  async googleLoginRedirect(@Req() req: Request) {
+    return this.userService.loginWithGoogle(req.user!);
   }
 }

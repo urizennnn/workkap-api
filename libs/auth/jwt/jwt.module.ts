@@ -23,6 +23,7 @@ export class GlobalJWTModule {
     return {
       global: true,
       module: GlobalJWTModule,
+      exports: [JwtModule],
       imports: [
         ...options.imports,
         JwtModule.registerAsync({

@@ -21,6 +21,7 @@ async function bootstrap() {
     origin: allowedOrigins.length > 0 ? allowedOrigins : undefined,
   });
 
+  app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
