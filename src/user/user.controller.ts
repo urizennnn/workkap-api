@@ -1,14 +1,16 @@
 import { Body, Controller, Post, Get, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { Google } from 'libs';
+import { Google, Docs } from 'libs';
 import { UserService } from './user.service';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 
 @Controller('users')
+@Docs.userController()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('signup/combination')
+  @Docs.signupWithEmailAndPassword()
   async signupWithEmailAndPassword(
     @Body() payload: SignUpWithEmailAndPassword,
   ) {
@@ -16,17 +18,20 @@ export class UserController {
   }
 
   @Post('login/combination')
+  @Docs.loginWithEmailAndPassword()
   async loginWithEmailAndPassword(@Body() payload: LoginWithEmailAndPassword) {
     return this.userService.loginWithEmailAndPassword(payload);
   }
 
   @Get('login/google')
+  @Docs.loginGoogle()
   @Google()
   async googleLogin() {
     // Guard redirects
   }
 
   @Get('login/google/redirect')
+  @Docs.loginGoogleRedirect()
   @Google()
   async googleLoginRedirect(@Req() req: Request) {
     return this.userService.loginWithGoogle(req.user!);
