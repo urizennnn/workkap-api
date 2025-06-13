@@ -109,4 +109,50 @@ export class UserService {
       };
     }
   }
+
+  async loginWithGoogle(googleUser: {
+    email?: string;
+    fullName?: string;
+    profilePictureUrl?: string;
+  }) {
+    if (!googleUser.email) {
+      return { status: 'error', message: 'Email not provided by Google' };
+    }
+    try {
+      let user = await this.prisma.user.findUnique({
+        where: { email: googleUser.email },
+      });
+
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email: googleUser.email,
+            fullName: googleUser.fullName,
+            profilePictureUrl: googleUser.profilePictureUrl,
+            registrationMethod: RegistrationMethod.GOOGLE,
+          },
+        });
+      } else if (user.registrationMethod !== RegistrationMethod.GOOGLE) {
+        return {
+          status: 'error',
+          message: `An account was found with a different login method. Please use ${user.registrationMethod} to login.`,
+        };
+      }
+
+      const tokenPayload: JwtPayload = {
+        userId: user.id,
+        userType: UserType.FREELANCER,
+      };
+      const accessToken = this.jwtService.sign(tokenPayload);
+      const refreshToken = this.jwtService.signRefreshToken(tokenPayload);
+
+      return {
+        status: 'success',
+        data: { user, tokens: { accessToken, refreshToken } },
+      };
+    } catch (error) {
+      this.logger.error('Error logging in with Google', error);
+      return { status: 'error', message: 'Failed to login user' };
+    }
+  }
 }

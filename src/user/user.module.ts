@@ -4,6 +4,7 @@ import { UserController } from './user.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { pickFrom } from 'libs/config';
 import { PrismaModule } from 'libs/db';
+import { GoogleAuthModule } from 'libs/auth/google';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PrismaModule } from 'libs/db';
       }),
       inject: [ConfigService],
     }),
+    GoogleAuthModule,
   ],
   controllers: [UserController],
   providers: [UserService],

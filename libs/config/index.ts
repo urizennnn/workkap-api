@@ -35,6 +35,11 @@ export const appConfigFactory = registerAs('app', () => {
       pathname: databaseName,
       port: database.port,
     },
+    google: {
+      client_id: env.google_client_id,
+      client_secret: env.google_client_secret,
+      callback_url: env.google_callback_url,
+    },
   } as const;
 });
 

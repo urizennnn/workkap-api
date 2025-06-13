@@ -53,4 +53,16 @@ export class AppConfigSchema {
   @Expose({ name: 'JWT_REFRESH_EXPIRES_IN' })
   @IsString()
   jwt_refresh_expires_in!: string;
+
+  @Expose({ name: 'GOOGLE_CLIENT_ID' })
+  @IsString()
+  google_client_id!: string;
+
+  @Expose({ name: 'GOOGLE_CLIENT_SECRET' })
+  @IsString()
+  google_client_secret!: string;
+
+  @Expose({ name: 'GOOGLE_CALLBACK_URL' })
+  @IsString()
+  google_callback_url!: string;
 }

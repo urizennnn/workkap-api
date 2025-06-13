@@ -1,4 +1,5 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, Req } from '@nestjs/common';
+import { Google } from 'libs/auth/google';
 import { UserService } from './user.service';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 
@@ -16,5 +17,17 @@ export class UserController {
   @Post('login/combination')
   async loginWithEmailAndPassword(@Body() payload: LoginWithEmailAndPassword) {
     return this.userService.loginWithEmailAndPassword(payload);
+  }
+
+  @Get('login/google')
+  @Google()
+  async googleLogin() {
+    // Guard redirects
+  }
+
+  @Get('login/google/redirect')
+  @Google()
+  async googleLoginRedirect(@Req() req: any) {
+    return this.userService.loginWithGoogle(req.user);
   }
 }
