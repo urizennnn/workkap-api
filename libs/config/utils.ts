@@ -49,6 +49,7 @@ export function pickFromApp<P extends Path<AppConfig>>(
   config: ConfigService,
   path: P,
 ): Choose<AppConfig, P> {
+  //@ts-expect-error some paths are not in AppConfig
   return config.getOrThrow(path);
 }
 
@@ -68,8 +69,10 @@ export function pickFrom<P extends Paths>(
 ): Chosen<P> {
   switch (ns) {
     case 'app':
+      //@ts-expect-error some paths are not in AppConfig
       return config.getOrThrow(`${ns}.${path}`);
     case undefined:
+      //@ts-expect-error some paths are not in AppConfig
       return config.getOrThrow(path);
     default:
       throw new Error(`Unknown namespace: ${ns}`);

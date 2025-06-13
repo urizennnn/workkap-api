@@ -6,12 +6,12 @@ import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 import { User } from '@prisma/client';
 
 @Controller('users')
-@Docs.userController()
+@Docs.controller
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('signup/combination')
-  @Docs.signupWithEmailAndPassword()
+  @Docs.signupWithEmailAndPassword
   async signupWithEmailAndPassword(
     @Body() payload: SignUpWithEmailAndPassword,
   ) {
@@ -19,28 +19,28 @@ export class UserController {
   }
 
   @Post('login/combination')
-  @Docs.loginWithEmailAndPassword()
+  @Docs.loginWithEmailAndPassword
   async loginWithEmailAndPassword(@Body() payload: LoginWithEmailAndPassword) {
     return this.userService.loginWithEmailAndPassword(payload);
   }
 
   @Get('login/google')
-  @Docs.loginGoogle()
+  @Docs.loginGoogle
   @Google()
   async googleLogin() {
     // Guard redirects
   }
 
   @Get('login/google/redirect')
-  @Docs.loginGoogleRedirect()
+  @Docs.loginGoogleRedirect
   @Google()
   async googleLoginRedirect(@Req() req: Request) {
     return this.userService.loginWithGoogle(req.user!);
   }
 
   @Patch('update')
-  @Docs.updateUser()
-  async updateUser(@Req() req: Request, @Body() body: Partial<User>) {
+  @Docs.updateUser
+  async updateUser(@Body() body: Partial<User>) {
     return this.userService.updateUserDetails(body);
   }
 }

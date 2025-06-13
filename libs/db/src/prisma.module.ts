@@ -9,7 +9,7 @@ export interface PrismaModuleOptions {
 
 export interface PrismaModuleAsyncOptions {
   imports?: Array<Type<unknown> | DynamicModule>;
-  inject?: unknown[];
+  inject?: any[];
   useFactory: (
     ...args: unknown[]
   ) => Promise<PrismaModuleOptions> | PrismaModuleOptions;

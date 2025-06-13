@@ -1,1 +1,1 @@
-export { UserDocs as Docs } from './user';
+export { UserControllerSwagger as Docs } from './user';
