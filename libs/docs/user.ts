@@ -1,9 +1,10 @@
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, Patch } from '@nestjs/common';
 import {
   ApiOperation,
   ApiTags,
   ApiOkResponse,
   ApiCreatedResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 
 export class UserDocs {
@@ -15,6 +16,21 @@ export class UserDocs {
     return applyDecorators(
       ApiOperation({ summary: 'Signup using email and password' }),
       ApiCreatedResponse({ description: 'User account created' }),
+      ApiBody({
+        description: 'User registration details',
+        examples: {
+          example1: {
+            summary: 'Example User Registration',
+            value: {
+              email: 'example@gmail.com',
+              password: 'StrongPassword123!',
+              fullName: 'John Doe',
+              username: 'johndoe',
+              country: 'USA',
+            },
+          },
+        },
+      }),
     );
   }
 
@@ -22,6 +38,18 @@ export class UserDocs {
     return applyDecorators(
       ApiOperation({ summary: 'Login using email and password' }),
       ApiOkResponse({ description: 'User logged in' }),
+      ApiBody({
+        description: 'User login credentials',
+        examples: {
+          example1: {
+            summary: 'Example User Login',
+            value: {
+              email: 'example@gmail.com',
+              password: 'StrongPassword123!',
+            },
+          },
+        },
+      }),
     );
   }
 
