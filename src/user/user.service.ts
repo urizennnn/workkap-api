@@ -5,18 +5,20 @@ import { RegistrationMethod } from '@prisma/client';
 import { WorkkapLogger } from 'libs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { hashPassword } from './utils';
+import { JwtPayload, JWTService, UserType } from 'libs/auth/jwt/jwt.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: WorkkapLogger,
+    private readonly jwtService: JWTService,
   ) {}
 
   async signupWithEmailAndPassword(payload: SignUpWithEmailAndPassword) {
     try {
       this.logger.info(
-        `UserService: Attempting to create user with email: ${payload.email}`,
+        `Attempting to create user with email: ${payload.email}`,
       );
       const hashedPassword = await hashPassword(payload.password);
       const user = await this.prisma.user.create({
@@ -28,13 +30,11 @@ export class UserService {
           username: payload.username,
         },
       });
-      this.logger.info(
-        `UserService: User created successfully with ID: ${user.id}`,
-      );
+      this.logger.info(`User created successfully with ID: ${user.id}`);
       return { status: 'success', data: user };
     } catch (error: unknown) {
       this.logger.error(
-        `UserService: Error creating user with email: ${payload.email}`,
+        `Error creating user with email: ${payload.email}`,
         error,
       );
       if (error instanceof PrismaClientKnownRequestError) {
@@ -51,18 +51,15 @@ export class UserService {
       };
     }
   }
+
   async loginWithEmailAndPassword(payload: LoginWithEmailAndPassword) {
     try {
-      this.logger.info(
-        `UserService: Attempting to login user with email: ${payload.email}`,
-      );
+      this.logger.info(`Attempting to login user with email: ${payload.email}`);
       const user = await this.prisma.user.findUnique({
         where: { email: payload.email },
       });
       if (!user) {
-        this.logger.info(
-          `UserService: User not found with email: ${payload.email}`,
-        );
+        this.logger.info(`User not found with email: ${payload.email}`);
         return {
           status: 'error',
           message: 'Invalid email or password',
@@ -71,7 +68,7 @@ export class UserService {
       const checkRegistrationMethod = user.registrationMethod;
       if (checkRegistrationMethod !== RegistrationMethod.COMBINATION) {
         this.logger.info(
-          `UserService: User registration method is not combination for user with email: ${payload.email}`,
+          `User registration method is not combination for email: ${payload.email}`,
         );
         return {
           status: 'error',
@@ -81,20 +78,29 @@ export class UserService {
       const isPasswordValid = await hashPassword(payload.password);
       if (user.password !== isPasswordValid) {
         this.logger.info(
-          `UserService: Invalid password for user with email: ${payload.email}`,
+          `Invalid password for user with email: ${payload.email}`,
         );
         return {
           status: 'error',
           message: 'Invalid email or password',
         };
       }
-      this.logger.info(
-        `UserService: User logged in successfully with ID: ${user.id}`,
-      );
-      return { status: 'success', data: user };
+      this.logger.info(`User logged in successfully with ID: ${user.id}`);
+      this.logger.info(`Assigning tokens to user`);
+      const tokenPayload: JwtPayload = {
+        userId: user.id,
+        userType: UserType.FREELANCER,
+      };
+      const accessToken = this.jwtService.sign(tokenPayload);
+      const refreshToken = this.jwtService.signRefreshToken(tokenPayload);
+
+      return {
+        status: 'success',
+        data: { user, tokens: { accessToken, refreshToken } },
+      };
     } catch (error: unknown) {
       this.logger.error(
-        `UserService: Error logging in user with email: ${payload.email}`,
+        `Error logging in user with email: ${payload.email}`,
         error,
       );
       return {

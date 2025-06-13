@@ -38,12 +38,6 @@ export class JWTService {
       expiresIn: this.expiresIn,
     });
   }
-  signAsync(payload: JwtPayload): Promise<string> {
-    return this.jwt.signAsync(payload, {
-      secret: this.secret,
-      expiresIn: this.expiresIn,
-    });
-  }
 
   verify(token: string): JwtPayload {
     return this.jwt.verify<JwtPayload>(token, {
