@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Get, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { Google } from 'libs/auth/google';
+import { Google } from 'libs';
 import { UserService } from './user.service';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 

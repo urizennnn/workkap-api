@@ -2,10 +2,7 @@ import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { pickFrom } from 'libs/config';
-import { PrismaModule } from 'libs/db';
-import { GoogleAuthModule } from 'libs/auth/google';
-import { JWTService } from 'libs/auth';
+import { GoogleAuthModule, JWTService, pickFrom, PrismaModule } from 'libs';
 
 @Module({
   imports: [

@@ -38,7 +38,7 @@ export class AppConfigSchema {
   @Expose({ name: 'APP_NAME' })
   @IsOptional()
   @IsString()
-  APP_NAME: string = 'OmniRelay API';
+  APP_NAME: string = 'Workkap API';
 
   @Expose({ name: 'NODE_ENV' })
   @IsOptional()

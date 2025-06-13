@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'libs/db';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 import { RegistrationMethod } from '@prisma/client';
-import { WorkkapLogger } from 'libs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { hashPassword } from './utils';
-import { JwtPayload, JWTService, UserType } from 'libs/auth/jwt/jwt.service';
+import {
+  JwtPayload,
+  JWTService,
+  PrismaService,
+  UserType,
+  WorkkapLogger,
+} from 'libs';
 
 @Injectable()
 export class UserService {

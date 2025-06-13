@@ -63,7 +63,7 @@ const logger = createLogger({
             `${Colors[levelStr] || ''}${msg}\x1b[39m`;
           const traceObj = trace as TraceableError | undefined;
           return (
-            `\x1b[35m[OmniRelay]\x1b[39m ${c(process.pid + '  -')} ${String(timestamp)}     ` +
+            `\x1b[35m[WORKKAP]\x1b[39m ${c(process.pid + '  -')} ${String(timestamp)}     ` +
             `${c(String(level).toUpperCase())} \x1b[33m[${String(context)}] ${String(message)} \x1b[33m${String(ms)}\x1b[39m` +
             `${traceObj?.stack ? `\n${traceObj.stack}` : ''}`
           );
