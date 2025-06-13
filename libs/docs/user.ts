@@ -1,4 +1,4 @@
-import { applyDecorators, Patch } from '@nestjs/common';
+import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
   ApiTags,
@@ -64,6 +64,25 @@ export class UserDocs {
     return applyDecorators(
       ApiOperation({ summary: 'Handle Google OAuth redirect' }),
       ApiOkResponse({ description: 'User logged in via Google' }),
+    );
+  }
+
+  static updateUser(): MethodDecorator & ClassDecorator {
+    return applyDecorators(
+      ApiOperation({ summary: 'Update user details' }),
+      ApiOkResponse({ description: 'User updated' }),
+      ApiBody({
+        description: 'Fields to update',
+        examples: {
+          example1: {
+            summary: 'Update user country',
+            value: {
+              email: 'example@gmail.com',
+              country: 'Canada',
+            },
+          },
+        },
+      }),
     );
   }
 }

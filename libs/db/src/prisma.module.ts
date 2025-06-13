@@ -8,10 +8,10 @@ export interface PrismaModuleOptions {
 }
 
 export interface PrismaModuleAsyncOptions {
-  imports?: Array<Type<any> | DynamicModule>;
-  inject?: any[];
+  imports?: Array<Type<unknown> | DynamicModule>;
+  inject?: unknown[];
   useFactory: (
-    ...args: any[]
+    ...args: unknown[]
   ) => Promise<PrismaModuleOptions> | PrismaModuleOptions;
 }
 
@@ -21,7 +21,7 @@ export class PrismaModule {
   static forRootAsync(options: PrismaModuleAsyncOptions): DynamicModule {
     const databaseUrlProvider: Provider = {
       provide: DATABASE_URL,
-      useFactory: async (...args: any[]) => {
+      useFactory: async (...args: unknown[]) => {
         const opts = await options.useFactory(...args);
         return opts.databaseUrl;
       },

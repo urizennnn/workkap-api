@@ -49,7 +49,7 @@ export function pickFromApp<P extends Path<AppConfig>>(
   config: ConfigService,
   path: P,
 ): Choose<AppConfig, P> {
-  return config.getOrThrow(path) as any;
+  return config.getOrThrow(path);
 }
 
 export function pickFrom<P extends Path<AppConfig>>(
@@ -68,9 +68,9 @@ export function pickFrom<P extends Paths>(
 ): Chosen<P> {
   switch (ns) {
     case 'app':
-      return config.getOrThrow(`${ns}.${path}`) as any;
+      return config.getOrThrow(`${ns}.${path}`);
     case undefined:
-      return config.getOrThrow(path) as any;
+      return config.getOrThrow(path);
     default:
       throw new Error(`Unknown namespace: ${ns}`);
   }

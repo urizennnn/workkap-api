@@ -39,6 +39,7 @@ export class UserController {
   }
 
   @Patch('update')
+  @Docs.updateUser()
   async updateUser(@Req() req: Request, @Body() body: Partial<User>) {
     return this.userService.updateUserDetails(body);
   }

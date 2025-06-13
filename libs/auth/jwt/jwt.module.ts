@@ -11,7 +11,7 @@ export interface JWTOptions {
   inject?: FactoryProvider['inject'];
   useFactory(
     this: void,
-    ...args: any[]
+    ...args: unknown[]
   ): Promise<JwtModuleOptions> | JwtModuleOptions;
 }
 
@@ -27,7 +27,7 @@ export class GlobalJWTModule {
       imports: [
         ...options.imports,
         JwtModule.registerAsync({
-          useFactory: (...args: any[]) => options.useFactory(...args),
+          useFactory: (...args: unknown[]) => options.useFactory(...args),
           inject: options.inject,
         }),
       ],
