@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService, SlugService, WorkkapLogger } from 'libs';
+import { GigSchemaType } from './dto';
 
 @Injectable()
 export class GigsService {
@@ -14,10 +15,7 @@ export class GigsService {
     private readonly slugify: SlugService,
   ) {}
 
-  async createGig(
-    data: Omit<Gig, 'id' | 'createdAt' | 'updatedAt'>,
-    userId: string,
-  ): Promise<Gig> {
+  async createGig(data: GigSchemaType, userId: string): Promise<Gig> {
     if (data.slug) {
       const existing = await this.prisma.gig.findUnique({
         where: { slug: data.slug },
