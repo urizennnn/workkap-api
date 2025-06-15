@@ -21,7 +21,7 @@ async function bootstrap() {
 
   const allowedOrigins = config.get<string[]>('ALLOWED_ORIGINS') || [];
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : undefined,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
   });
 
   app.setGlobalPrefix('api');
