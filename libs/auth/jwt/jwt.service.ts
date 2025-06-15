@@ -11,9 +11,6 @@ export enum UserType {
 export type JwtPayload = {
   userId: string;
   userType: UserType;
-  /**
-   * Present only on refresh tokens. Access tokens should not include this field.
-   */
   isRefreshToken?: boolean;
 };
 
@@ -56,9 +53,12 @@ export class JWTService {
   }
 
   signRefreshToken(payload: JwtPayload): string {
-    return this.jwt.sign({ ...payload, isRefreshToken: true }, {
-      secret: this.secret,
-      expiresIn: this.refreshTokenExpiresIn,
-    });
+    return this.jwt.sign(
+      { ...payload, isRefreshToken: true },
+      {
+        secret: this.secret,
+        expiresIn: this.refreshTokenExpiresIn,
+      },
+    );
   }
 }

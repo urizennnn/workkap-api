@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Get, Req, Patch } from '@nestjs/common';
 import { Request } from 'express';
-import { Google, Docs } from 'libs';
+import { Google, Docs, NeedsAuth } from 'libs';
 import { UserService } from './user.service';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 import { User } from '@prisma/client';
@@ -39,6 +39,7 @@ export class UserController {
   }
 
   @Patch('update')
+  @NeedsAuth()
   @Docs.updateUser
   async updateUser(@Body() body: Partial<User>) {
     return this.userService.updateUserDetails(body);

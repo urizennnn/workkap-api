@@ -1,28 +1,106 @@
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 enum RegistrationMethod {
-    COMBINATION
-    GOOGLE
-    FACEBOOK
-    APPLE
+  COMBINATION
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+enum PackageTier {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
 }
 
 model User {
-    id                 String             @id @default(uuid())
-    email              String?            @unique
-    password           String?
-    country            String?
-    profilePictureUrl  String?
-    username           String?            @unique
-    fullName           String?
-    registrationMethod RegistrationMethod @default(COMBINATION)
-    createdAt          DateTime           @default(now())
-    updatedAt          DateTime           @updatedAt
+  id                 String             @id @default(uuid())
+  email              String?            @unique
+  password           String?
+  country            String?
+  profilePictureUrl  String?
+  username           String?            @unique
+  fullName           String?
+  registrationMethod RegistrationMethod @default(COMBINATION)
+  gigs               Gig[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("users")
+}
+
+model Gig {
+  id                  String         @id @default(uuid())
+  slug                String         @unique @default(uuid())
+  userId              String
+  user                User           @relation(fields: [userId], references: [id])
+  title               String
+  mainCategory        String
+  subCategory         String
+  tools               String[]       @default([])
+  tags                String[]       @default([])
+  description         String         @db.VarChar(1000)
+  packages            GigPackage[]
+  extras              ExtraService[]
+  questions           Question[]
+  media               MediaItem[]
+  thirdPartyAgreement Boolean        @default(false)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@map("gigs")
+}
+
+model GigPackage {
+  id                String      @id @default(uuid())
+  gig               Gig         @relation(fields: [gigId], references: [id])
+  gigId             String
+  tier              PackageTier
+  name              String
+  description       String
+  deliveryTime      Int
+  customAssetDesign Boolean     @default(false)
+  sourceFile        Boolean     @default(false)
+  contentUpload     Boolean     @default(false)
+  convertToHtmlCss  Boolean     @default(false)
+  revisions         Int         @default(0)
+  price             Decimal     @db.Decimal(10, 2)
+  totalPrice        Decimal     @db.Decimal(10, 2)
+}
+
+model ExtraService {
+  id           String  @id @default(uuid())
+  gig          Gig     @relation(fields: [gigId], references: [id])
+  gigId        String
+  name         String
+  deliveryTime Int
+  price        Decimal @db.Decimal(10, 2)
+}
+
+model Question {
+  id    String @id @default(uuid())
+  gig   Gig    @relation(fields: [gigId], references: [id])
+  gigId String
+  text  String
+}
+
+model MediaItem {
+  id    String    @id @default(uuid())
+  gig   Gig       @relation(fields: [gigId], references: [id])
+  gigId String
+  type  MediaType
+  url   String
 }

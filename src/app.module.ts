@@ -1,15 +1,21 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { LoggerModule, WorkkapMiddlewareLogger } from 'libs/common/logger';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { appConfigFactory, pickFrom } from 'libs/config';
 import { UserModule } from './user/user.module';
 import { GlobalJWTModule } from 'libs/auth/jwt/jwt.module';
-import { PrismaModule } from 'libs';
+import {
+  LoggerModule,
+  PrismaModule,
+  SlugModule,
+  WorkkapMiddlewareLogger,
+} from 'libs';
+import { GigsModule } from './gigs/gigs.module';
 
 @Module({
   imports: [
+    SlugModule,
     ConfigModule.forRoot({ isGlobal: true, load: [appConfigFactory] }),
     GlobalJWTModule.initAsync({
       inject: [ConfigService],
@@ -26,6 +32,7 @@ import { PrismaModule } from 'libs';
       inject: [ConfigService],
     }),
     UserModule,
+    GigsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
