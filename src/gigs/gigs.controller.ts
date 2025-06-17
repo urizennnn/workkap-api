@@ -10,6 +10,7 @@ import {
 import { Request } from 'express';
 import { GigsService } from './gigs.service';
 import { NeedsAuth, GigsDocs } from 'libs';
+import type { AuthorizedRequest } from 'libs/@types/express';
 import { GigSchemaType } from './dto';
 
 @Controller('gigs')
@@ -21,7 +22,7 @@ export class GigsController {
   @Post('updateOrCreate')
   @GigsDocs.createGig
   async createGig(@Req() req: Request, @Body() data: GigSchemaType) {
-    const userId = req.user.userId;
+    const userId = (req as AuthorizedRequest).user.userId;
     return this.gigsService.createGig(data, userId);
   }
 
@@ -29,7 +30,7 @@ export class GigsController {
   @Get('fetch')
   @GigsDocs.getGigs
   async getGigs(@Req() req: Request) {
-    const userId = req.user.userId;
+    const userId = (req as AuthorizedRequest).user.userId;
     return this.gigsService.fetchGigs(userId);
   }
 
@@ -46,7 +47,7 @@ export class GigsController {
     @Req() req: Request,
     @Param('identifier') identifier: string,
   ) {
-    const userId = req.user.userId;
+    const userId = (req as AuthorizedRequest).user.userId;
     return this.gigsService.deleteGig(identifier, userId);
   }
 }

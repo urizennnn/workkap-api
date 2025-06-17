@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Get, Req, Patch } from '@nestjs/common';
 import { Request } from 'express';
 import { Google, Docs, NeedsAuth } from 'libs';
+import type { GoogleRequest } from 'libs/@types/express';
 import { UserService } from './user.service';
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 import { User } from '@prisma/client';
@@ -35,7 +36,7 @@ export class UserController {
   @Docs.loginGoogleRedirect
   @Google()
   async googleLoginRedirect(@Req() req: Request) {
-    return this.userService.loginWithGoogle(req.user!);
+    return this.userService.loginWithGoogle((req as GoogleRequest).user);
   }
 
   @Patch('update')
