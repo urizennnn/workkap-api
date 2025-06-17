@@ -33,18 +33,13 @@ export class GigsService {
       await tx.user.findUniqueOrThrow({ where: { id: userId } });
       const slug = this.slugify.slugify(data.title ?? 'gig');
       this.logger.info(`Creating new gig with slug "${slug}"`);
-      const created = await tx.gig.create({
-        data: { ...data, slug },
-      });
-      await tx.user.update({
-        where: { id: userId },
+      return tx.gig.create({
         data: {
-          gigs: {
-            connect: { id: created.id },
-          },
+          ...data,
+          slug,
+          user: { connect: { id: userId } },
         },
       });
-      return created;
     });
 
     this.logger.info(`Gig created with ID "${gig.id}"`);
