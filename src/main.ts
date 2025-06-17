@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
@@ -10,6 +10,7 @@ import {
   SecurityHeadersInterceptor,
   WorkkapLogger,
 } from 'libs';
+import { SchemaValidatorInterceptor } from 'libs/common/interceptor/schema.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -36,6 +37,7 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(logger));
   app.useGlobalInterceptors(
     new FormatResponseInterceptor(),
+    new SchemaValidatorInterceptor(new Reflector()),
     new SecurityHeadersInterceptor(),
   );
 

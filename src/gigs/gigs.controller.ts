@@ -9,35 +9,38 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { GigsService } from './gigs.service';
-import { NeedsAuth, GigsDocs } from 'libs';
+import { NeedsAuth, GigsDocs, ValidateSchema } from 'libs';
 import type { AuthorizedRequest } from 'libs/@types/express';
-import { GigSchemaType } from './dto';
+import { GigSchemaType, GigSchema } from './dto';
 
 @Controller('gigs')
 @GigsDocs.controller
 export class GigsController {
   constructor(private readonly gigsService: GigsService) {}
 
+  @GigsDocs.createGig
   @NeedsAuth()
   @Post('updateOrCreate')
-  @GigsDocs.createGig
+  @ValidateSchema({
+    body: GigSchema,
+  })
   async createGig(@Req() req: Request, @Body() data: GigSchemaType) {
     const userId = (req as AuthorizedRequest).user.userId;
     return this.gigsService.createGig(data, userId);
   }
 
+  @GigsDocs.getGigs
   @NeedsAuth()
   @Get('fetch')
-  @GigsDocs.getGigs
   async getGigs(@Req() req: Request) {
     const userId = (req as AuthorizedRequest).user.userId;
     return this.gigsService.fetchGigs(userId);
   }
 
+  @GigsDocs.getGig
   @NeedsAuth()
   @Get('get/:identifier')
-  @GigsDocs.getGig
-  async getGig(@Req() req: Request, @Param('identifier') identifier: string) {
+  async getGig(@Param('identifier') identifier: string) {
     return this.gigsService.getGig(identifier);
   }
   @NeedsAuth()

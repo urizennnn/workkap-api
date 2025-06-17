@@ -33,7 +33,7 @@ export class FormatResponseInterceptor implements NestInterceptor {
         return throwError(
           () =>
             new HttpException(
-              { status: 'error', message },
+              { status: 'error', message, err },
               HttpStatus.INTERNAL_SERVER_ERROR,
             ),
         );

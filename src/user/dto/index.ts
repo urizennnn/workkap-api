@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-export const SignUpWithEmailAndPassword = v.object({
+export const SignUpWithEmailAndPasswordSchema = v.object({
   email: v.pipe(v.string(), v.email()),
   password: v.pipe(v.string(), v.minLength(6)),
   fullName: v.pipe(v.string(), v.minLength(1)),
@@ -9,13 +9,13 @@ export const SignUpWithEmailAndPassword = v.object({
 });
 
 export type SignUpWithEmailAndPassword = v.InferInput<
-  typeof SignUpWithEmailAndPassword
+  typeof SignUpWithEmailAndPasswordSchema
 >;
 
-export const LoginWithEmailAndPassword = v.object({
+export const LoginWithEmailAndPasswordSchema = v.object({
   email: v.pipe(v.string(), v.email()),
   password: v.pipe(v.string(), v.minLength(6)),
 });
 export type LoginWithEmailAndPassword = v.InferInput<
-  typeof LoginWithEmailAndPassword
+  typeof LoginWithEmailAndPasswordSchema
 >;
