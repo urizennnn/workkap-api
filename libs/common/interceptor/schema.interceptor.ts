@@ -16,10 +16,6 @@ import {
   VSchema,
 } from '../decorators/validateSchema.decorator';
 
-/**
- * Intercepts incoming requests and validates specified request parts
- * against Valibot schemas. Supports body, query, params, or custom.
- */
 @Injectable()
 export class SchemaValidatorInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
@@ -52,14 +48,14 @@ export class SchemaValidatorInterceptor implements NestInterceptor {
         continue;
       }
 
-      const raw = req[part];
+      const raw: string = req[part] as string;
       const schemas = Array.isArray(schemaDef)
         ? schemaDef
         : ([schemaDef] as VSchema[]);
       const merged = schemas.length > 1 ? v.intersect(schemas) : schemas[0];
 
       try {
-        const parsed = v.parse(merged, raw);
+        const parsed: unknown = v.parse(merged, raw);
         req[part] = parsed;
       } catch (error) {
         if (v.isValiError(error)) {
