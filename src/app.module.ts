@@ -11,7 +11,6 @@ import {
   SlugModule,
   WorkkapMiddlewareLogger,
 } from 'libs';
-import { OrderModule } from './modules/order/order.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 
 @Module({
@@ -33,7 +32,6 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
       inject: [ConfigService],
     }),
     UserModule,
-    OrderModule,
     WorkspaceModule,
   ],
   controllers: [AppController],

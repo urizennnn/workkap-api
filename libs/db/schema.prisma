@@ -14,6 +14,14 @@ enum RegistrationMethod {
   APPLE
 }
 
+enum OrderStatus {
+  ACTIVE
+  PENDING
+  COMPLETED
+  LATE
+  CANCELLED
+}
+
 enum PackageTier {
   BASIC
   STANDARD
@@ -35,18 +43,38 @@ model User {
   username           String?            @unique
   fullName           String?
   registrationMethod RegistrationMethod @default(COMBINATION)
-  gigs               Gig[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  Freelancer         Freelancer?
+  Client             Client?
 
   @@map("users")
+}
+
+model Freelancer {
+  id    String  @id @default(uuid())
+  uid   String  @unique
+  user  User    @relation(fields: [uid], references: [id])
+  gigs  Gig[]
+  Order Order[]
+
+  @@map("freelancers")
+}
+
+model Client {
+  id    String  @id @default(uuid())
+  uid   String  @unique
+  user  User    @relation(fields: [uid], references: [id])
+  Order Order[]
+
+  @@map("clients")
 }
 
 model Gig {
   id                  String         @id @default(uuid())
   slug                String         @unique @default(uuid())
   userId              String
-  user                User           @relation(fields: [userId], references: [id])
+  user                Freelancer     @relation(fields: [userId], references: [id])
   title               String
   mainCategory        String
   subCategory         String
@@ -60,6 +88,7 @@ model Gig {
   thirdPartyAgreement Boolean        @default(false)
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
+  Order               Order[]
 
   @@map("gigs")
 }
@@ -79,6 +108,7 @@ model GigPackage {
   revisions         Int         @default(0)
   price             Decimal     @db.Decimal(10, 2)
   totalPrice        Decimal     @db.Decimal(10, 2)
+  Order             Order[]
 }
 
 model ExtraService {
@@ -103,4 +133,25 @@ model MediaItem {
   gigId String
   type  MediaType
   url   String
+}
+
+model Order {
+  id           String     @id @default(uuid())
+  gigId        String
+  gig          Gig        @relation(fields: [gigId], references: [id])
+  clientId     String
+  client       Client     @relation(fields: [clientId], references: [id])
+  freelancerId String
+  freelancer   Freelancer @relation(fields: [freelancerId], references: [id])
+  packageId    String
+  package      GigPackage @relation(fields: [packageId], references: [id])
+  status       String     @default("ACTIVE") @map("order_status")
+  totalPrice   Decimal    @db.Decimal(10, 2)
+  amount       Int        @db.Integer()
+  Note         String
+  DueDate      DateTime
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("orders")
 }
