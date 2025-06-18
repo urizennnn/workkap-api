@@ -20,10 +20,13 @@ async function bootstrap() {
 
   app.use(helmet());
 
-  // const allowedOrigins = config.get<string[]>('ALLOWED_ORIGINS') || [];
+  const allowedOrigins: string[] = process.env.ALLOWED_ORIGINS
+    ? (JSON.parse(process.env.ALLOWED_ORIGINS) as string[])
+    : ['http://localhost:5173'];
+
   app.enableCors({
-    // origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
-    origin: '*',
+    origin: allowedOrigins,
+    credentials: true,
   });
 
   app.setGlobalPrefix('api');
