@@ -9,7 +9,7 @@ import {
 import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
 import { RegistrationMethod, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { hashPassword } from './utils';
+import { comparePassword, hashPassword } from './utils';
 import {
   JwtPayload,
   JWTService,
@@ -81,8 +81,11 @@ export class UserService {
         );
       }
 
-      const hashedInput = await hashPassword(payload.password);
-      if (user.password !== hashedInput) {
+      const hashedInput = await comparePassword(
+        payload.password,
+        user.password!,
+      );
+      if (!hashedInput) {
         this.logger.info(
           `Invalid password for user with email: ${payload.email}`,
         );
@@ -102,6 +105,7 @@ export class UserService {
         data: { user, tokens: { accessToken, refreshToken } },
       };
     } catch (error: unknown) {
+      console.log(error);
       this.logger.error(
         `Error logging in user with email: ${payload.email}`,
         error,
