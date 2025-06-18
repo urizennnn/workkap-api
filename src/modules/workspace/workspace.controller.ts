@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 
-@Controller('workspace')
+@Controller()
 export class WorkspaceController {
   @Get()
   getRoot() {

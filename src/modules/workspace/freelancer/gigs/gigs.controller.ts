@@ -13,7 +13,7 @@ import { NeedsAuth, GigsDocs, ValidateSchema } from 'libs';
 import type { AuthorizedRequest } from 'libs/@types/express';
 import { GigSchemaType, GigSchema } from './dto';
 
-@Controller('gigs')
+@Controller()
 @GigsDocs.controller
 export class GigsController {
   constructor(private readonly gigsService: GigsService) {}
