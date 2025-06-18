@@ -13,7 +13,6 @@ import {
 } from 'libs';
 import { OrderModule } from './modules/order/order.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
-import { FreelancerModule } from './modules/workspace/freelancer/freelancer.module';
 
 @Module({
   imports: [
@@ -34,7 +33,6 @@ import { FreelancerModule } from './modules/workspace/freelancer/freelancer.modu
       inject: [ConfigService],
     }),
     UserModule,
-    FreelancerModule,
     OrderModule,
     WorkspaceModule,
   ],
