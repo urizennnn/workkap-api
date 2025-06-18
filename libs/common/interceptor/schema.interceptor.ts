@@ -69,12 +69,18 @@ export class SchemaValidatorInterceptor implements NestInterceptor {
     }
   }
 
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment,
+    @typescript-eslint/no-unsafe-call,
+    @typescript-eslint/no-unsafe-member-access */
   private formatValibotErrors(
-    err: ValiError<any>,
+    err: ValiError<unknown>,
   ): Array<{ path: string; message: string }> {
     return err.issues.map((i) => ({
       path: i.path.join('.') || '<root>',
       message: i.message,
     }));
   }
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment,
+    @typescript-eslint/no-unsafe-call,
+    @typescript-eslint/no-unsafe-member-access */
 }

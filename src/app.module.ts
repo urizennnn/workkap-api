@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { appConfigFactory, pickFrom } from 'libs/config';
-import { UserModule } from './user/user.module';
+import { UserModule } from './modules/user/user.module';
 import { GlobalJWTModule } from 'libs/auth/jwt/jwt.module';
 import {
   LoggerModule,
@@ -11,8 +11,8 @@ import {
   SlugModule,
   WorkkapMiddlewareLogger,
 } from 'libs';
-import { GigsModule } from './gigs/gigs.module';
-import { OrderModule } from './order/order.module';
+import { OrderModule } from './modules/order/order.module';
+import { WorkspaceModule } from './modules/workspace/workspace.module';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { OrderModule } from './order/order.module';
     }),
     UserModule,
     OrderModule,
-    GigsModule,
+    WorkspaceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
