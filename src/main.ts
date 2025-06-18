@@ -20,9 +20,10 @@ async function bootstrap() {
 
   app.use(helmet());
 
-  const allowedOrigins = config.get<string[]>('ALLOWED_ORIGINS') || [];
+  // const allowedOrigins = config.get<string[]>('ALLOWED_ORIGINS') || [];
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+    // origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+    origin: '*',
   });
 
   app.setGlobalPrefix('api');
