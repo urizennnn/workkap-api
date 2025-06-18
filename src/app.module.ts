@@ -11,7 +11,6 @@ import {
   SlugModule,
   WorkkapMiddlewareLogger,
 } from 'libs';
-import { GigsModule } from './modules/gigs/gigs.module';
 import { OrderModule } from './modules/order/order.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 
@@ -35,7 +34,6 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     }),
     UserModule,
     OrderModule,
-    GigsModule,
     WorkspaceModule,
   ],
   controllers: [AppController],
