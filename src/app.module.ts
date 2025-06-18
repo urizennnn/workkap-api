@@ -1,5 +1,4 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -14,26 +13,10 @@ import {
 } from 'libs';
 import { OrderModule } from './modules/order/order.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
-import { ClientModule } from './modules/workspace/client/client.module';
 import { FreelancerModule } from './modules/workspace/freelancer/freelancer.module';
-import { GigsModule } from './modules/workspace/freelancer/gigs/gigs.module';
 
 @Module({
   imports: [
-    RouterModule.register([
-      {
-        path: 'workspace',
-        module: WorkspaceModule,
-        children: [
-          { path: 'client', module: ClientModule },
-          {
-            path: 'freelancer',
-            module: FreelancerModule,
-            children: [{ path: 'gigs', module: GigsModule }],
-          },
-        ],
-      },
-    ]),
     SlugModule,
     ConfigModule.forRoot({ isGlobal: true, load: [appConfigFactory] }),
     GlobalJWTModule.initAsync({
@@ -51,6 +34,7 @@ import { GigsModule } from './modules/workspace/freelancer/gigs/gigs.module';
       inject: [ConfigService],
     }),
     UserModule,
+    FreelancerModule,
     OrderModule,
     WorkspaceModule,
   ],
@@ -59,6 +43,8 @@ import { GigsModule } from './modules/workspace/freelancer/gigs/gigs.module';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(WorkkapMiddlewareLogger).forRoutes('*');
+    consumer
+      .apply(WorkkapMiddlewareLogger)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }
