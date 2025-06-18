@@ -70,9 +70,9 @@ export class SchemaValidatorInterceptor implements NestInterceptor {
   }
 
   private formatValibotErrors(
-    err: ValiError<any>,
+    err: ValiError<unknown>,
   ): Array<{ path: string; message: string }> {
-    return err.issues.map((i) => ({
+    return err.issues.map((i: { path: string[]; message: string }) => ({
       path: i.path.join('.') || '<root>',
       message: i.message,
     }));

@@ -2,18 +2,18 @@ import { Body, Controller, Post, Get, Req, Patch } from '@nestjs/common';
 import { Request } from 'express';
 import { Google, Docs, NeedsAuth, ValidateSchema } from 'libs';
 import type { GoogleRequest } from 'libs/@types/express';
-import { UserService } from './user.service';
+import { UserService } from '../user/user.service';
 import {
   LoginWithEmailAndPassword,
   LoginWithEmailAndPasswordSchema,
   SignUpWithEmailAndPassword,
   SignUpWithEmailAndPasswordSchema,
-} from './dto';
+} from '../user/dto';
 import { User } from '@prisma/client';
 
-@Controller('users')
+@Controller('clients')
 @Docs.controller
-export class UserController {
+export class ClientController {
   constructor(private readonly userService: UserService) {}
 
   @Docs.signupWithEmailAndPassword
