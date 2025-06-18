@@ -6,7 +6,11 @@ import {
   ApiOkResponse,
   ApiBody,
   ApiParam,
+  ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
+import { errorSchema } from './error-schema';
 
 export const GigsControllerSwagger = {
   controller: applyDecorators(ApiTags('Gigs')),
@@ -22,6 +26,14 @@ export const GigsControllerSwagger = {
           data: { type: 'object' },
         },
       },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+    ApiBadRequestResponse({
+      description: 'Invalid gig data',
+      schema: errorSchema('Invalid gig data'),
     }),
     ApiBody({
       description: 'Gig details',
@@ -49,17 +61,37 @@ export const GigsControllerSwagger = {
       description: 'List of gigs',
       schema: { type: 'array', items: { type: 'object' } },
     }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
   ),
 
   getGig: applyDecorators(
     ApiOperation({ summary: 'Get a single gig by slug or ID' }),
     ApiOkResponse({ description: 'Gig data', schema: { type: 'object' } }),
     ApiParam({ name: 'identifier', description: 'Gig slug or ID' }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+    ApiNotFoundResponse({
+      description: 'Gig not found',
+      schema: errorSchema('Gig not found'),
+    }),
   ),
 
   deleteGig: applyDecorators(
     ApiOperation({ summary: 'Delete a gig' }),
     ApiOkResponse({ description: 'Gig deleted' }),
     ApiParam({ name: 'identifier', description: 'Gig slug or ID' }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+    ApiNotFoundResponse({
+      description: 'Gig not found',
+      schema: errorSchema('Gig not found'),
+    }),
   ),
 };

@@ -5,7 +5,10 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiBody,
+  ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { errorSchema } from './error-schema';
 
 export const UserControllerSwagger = {
   controller: applyDecorators(ApiTags('Users')),
@@ -29,6 +32,10 @@ export const UserControllerSwagger = {
           },
         },
       },
+    }),
+    ApiBadRequestResponse({
+      description: 'Invalid signup data',
+      schema: errorSchema('Invalid signup data'),
     }),
     ApiBody({
       description: 'User registration details',
@@ -91,6 +98,14 @@ export const UserControllerSwagger = {
         },
       },
     }),
+    ApiUnauthorizedResponse({
+      description: 'Invalid credentials',
+      schema: errorSchema('Invalid credentials'),
+    }),
+    ApiBadRequestResponse({
+      description: 'Invalid login data',
+      schema: errorSchema('Invalid login data'),
+    }),
     ApiBody({
       description: 'User login credentials',
       required: true,
@@ -137,6 +152,10 @@ export const UserControllerSwagger = {
         },
       },
     }),
+    ApiUnauthorizedResponse({
+      description: 'Google authentication failed',
+      schema: errorSchema('Google authentication failed'),
+    }),
   ),
 
   updateUser: applyDecorators(
@@ -159,6 +178,14 @@ export const UserControllerSwagger = {
           },
         },
       },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+    ApiBadRequestResponse({
+      description: 'Invalid update data',
+      schema: errorSchema('Invalid update data'),
     }),
     ApiBody({
       description: 'Fields to update',
