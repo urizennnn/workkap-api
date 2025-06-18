@@ -73,7 +73,7 @@ export class SchemaValidatorInterceptor implements NestInterceptor {
     @typescript-eslint/no-unsafe-call,
     @typescript-eslint/no-unsafe-member-access */
   private formatValibotErrors(
-    err: ValiError<unknown>,
+    err: ValiError<any>,
   ): Array<{ path: string; message: string }> {
     return err.issues.map((i) => ({
       path: i.path.join('.') || '<root>',
