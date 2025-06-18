@@ -12,6 +12,7 @@ import {
   WorkkapMiddlewareLogger,
 } from 'libs';
 import { GigsModule } from './gigs/gigs.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { GigsModule } from './gigs/gigs.module';
       inject: [ConfigService],
     }),
     UserModule,
+    OrderModule,
     GigsModule,
   ],
   controllers: [AppController],
