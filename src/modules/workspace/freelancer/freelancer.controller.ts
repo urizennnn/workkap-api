@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { FreelancerService } from './freelancer.service';
 
-@Controller('workspace/freelancer')
+@Controller()
 export class FreelancerController {
   constructor(private readonly freelancerService: FreelancerService) {}
 
