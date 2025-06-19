@@ -3,6 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { OrderStatus } from '@prisma/client';
 import { PrismaService, WorkkapLogger } from 'libs';
 
 @Injectable()
@@ -38,7 +39,18 @@ export class OrderService {
       this.logger.info(
         `Found ${orders.length} orders for freelancer ID: ${freelancer.id}`,
       );
-      return orders;
+      const results = {
+        active: orders.filter((order) => order.status === OrderStatus.ACTIVE),
+        late: orders.filter((order) => order.status === OrderStatus.LATE),
+        completed: orders.filter(
+          (order) => order.status === OrderStatus.COMPLETED,
+        ),
+        pending: orders.filter((order) => order.status === OrderStatus.PENDING),
+        cancelled: orders.filter(
+          (order) => order.status === OrderStatus.CANCELLED,
+        ),
+      };
+      return results;
     } catch (error) {
       this.logger.error(`Failed to fetch orders for user "${userId}"`, error);
       throw new InternalServerErrorException('Unable to fetch orders');
