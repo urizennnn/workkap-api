@@ -115,7 +115,6 @@ model GigPackage {
   revisions         Int         @default(0)
   price             Decimal     @db.Decimal(10, 2)
   totalPrice        Decimal     @db.Decimal(10, 2)
-  Order             Order[]
 }
 
 model ExtraService {
@@ -150,13 +149,6 @@ model Order {
   client          Client         @relation(fields: [clientId], references: [id])
   freelancerId    String
   freelancer      Freelancer     @relation(fields: [freelancerId], references: [id])
-  packageId       String
-  package         GigPackage     @relation(fields: [packageId], references: [id])
-  status          OrderStatus    @default(ACTIVE)
-  totalPrice      Decimal        @db.Decimal(10, 2)
-  amount          Int
-  note            String
-  dueDate         DateTime
   payment         PaymentMethod
   modeOfWorkingId String?        @unique
   modeOfWorking   ModeOfWorking? @relation("OrderMode", fields: [modeOfWorkingId], references: [id])

@@ -25,8 +25,9 @@ export class OrderService {
       this.logger.info(`Creating order for user ID: ${userId}`);
       const order = await this.prisma.order.create({
         data: {
-          freelancerId: orderData.freelancerId,
-          gigId: orderData.gigId,
+          freelancer: { connect: { id: orderData.freelancerId } },
+          gig: { connect: { id: orderData.gigId } },
+          client: { connect: { id: client.id } },
           modeOfWorking: {
             create: {
               hourlyRate: {
@@ -44,7 +45,6 @@ export class OrderService {
             },
           },
           payment: orderData.payment as PaymentMethod,
-          clientId: client.id,
         },
       });
       return order;
