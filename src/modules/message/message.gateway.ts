@@ -1,4 +1,11 @@
-import { OnGatewayConnection, SubscribeMessage, WebSocketGateway, WebSocketServer, ConnectedSocket, MessageBody } from '@nestjs/websockets';
+import {
+  OnGatewayConnection,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  ConnectedSocket,
+  MessageBody,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JWTService, JwtPayload } from 'libs';
 import { MessageService } from './message.service';
@@ -20,10 +27,12 @@ export class MessageGateway implements OnGatewayConnection {
         (client.handshake.auth && client.handshake.auth.token) ||
         (client.handshake.query.token as string | undefined);
       if (!token) throw new Error('No token');
-      const payload = await this.jwtService.verify<JwtPayload>(token);
+      const payload = this.jwtService.verify(token);
       client.data.userId = payload.userId;
       client.join(payload.userId);
-      const count = await this.messageService.countUnreadMessages(payload.userId);
+      const count = await this.messageService.countUnreadMessages(
+        payload.userId,
+      );
       client.emit('unread_count', { count });
     } catch (e) {
       client.disconnect(true);
@@ -39,7 +48,9 @@ export class MessageGateway implements OnGatewayConnection {
     const message = await this.messageService.sendMessage(senderId, body);
     this.server.to(body.receiverId).emit('new_message', message);
     client.emit('new_message', message);
-    const count = await this.messageService.countUnreadMessages(body.receiverId);
+    const count = await this.messageService.countUnreadMessages(
+      body.receiverId,
+    );
     this.server.to(body.receiverId).emit('unread_count', { count });
   }
 

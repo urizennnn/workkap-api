@@ -1,4 +1,9 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import Redis from 'ioredis';
 import { WorkkapLogger } from 'libs/common/logger';
 import { REDIS_URL } from './redis.module';
@@ -10,7 +15,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     @Inject(REDIS_URL) private readonly url: string,
     private readonly logger: WorkkapLogger,
   ) {
-    this.client = new Redis(url);
+    this.client = new Redis(this.url);
   }
 
   async onModuleInit() {

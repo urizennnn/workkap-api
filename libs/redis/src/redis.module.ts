@@ -11,7 +11,9 @@ export interface RedisModuleOptions {
 export interface RedisModuleAsyncOptions {
   imports?: Array<Type<unknown> | DynamicModule>;
   inject?: any[];
-  useFactory: (...args: unknown[]) => Promise<RedisModuleOptions> | RedisModuleOptions;
+  useFactory: (
+    ...args: unknown[]
+  ) => Promise<RedisModuleOptions> | RedisModuleOptions;
 }
 
 @Global()
