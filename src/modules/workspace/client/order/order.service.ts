@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderSchemaType } from './dto';
 import { PrismaService, WorkkapLogger } from 'libs';
+import { MessageService } from '../../../message/message.service';
 import { Order, PaymentMethod } from '@prisma/client';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class OrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: WorkkapLogger,
+    private readonly messageService: MessageService,
   ) {}
 
   async createOrder(
@@ -15,9 +17,11 @@ export class OrderService {
     userId: string,
   ): Promise<Order> {
     try {
-      const [user, client] = await Promise.all([
+      const [user, client, gig, freelancer] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
         this.prisma.client.findUnique({ where: { uid: userId } }),
+        this.prisma.gig.findUnique({ where: { id: orderData.gigId } }),
+        this.prisma.freelancer.findUnique({ where: { id: orderData.freelancerId } }),
       ]);
 
       if (!user) throw new NotFoundException('User not found');
@@ -49,6 +53,14 @@ export class OrderService {
           payment: orderData.payment as PaymentMethod,
         },
       });
+
+      if (gig && freelancer) {
+        await this.messageService.sendMessage(userId, {
+          name: gig.title,
+          receiverId: freelancer.uid,
+          content: 'Order created',
+        });
+      }
       return order;
     } catch (error) {
       this.logger.error(`Failed to create order for user "${userId}"`, error);

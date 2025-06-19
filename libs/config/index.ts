@@ -40,6 +40,9 @@ export const appConfigFactory = registerAs('app', () => {
       client_secret: env.google_client_secret,
       callback_url: env.google_callback_url,
     },
+    redis: {
+      url: env.redis_url,
+    },
   } as const;
 });
 

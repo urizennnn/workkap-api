@@ -10,8 +10,10 @@ import {
   PrismaModule,
   SlugModule,
   WorkkapMiddlewareLogger,
+  RedisModule,
 } from 'libs';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
+import { MessageModule } from './modules/message/message.module';
 
 @Module({
   imports: [
@@ -31,8 +33,16 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
       }),
       inject: [ConfigService],
     }),
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        redisUrl: pickFrom(config, 'redis.url', 'app'),
+      }),
+      inject: [ConfigService],
+    }),
     UserModule,
     WorkspaceModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -65,4 +65,8 @@ export class AppConfigSchema {
   @Expose({ name: 'GOOGLE_CALLBACK_URL' })
   @IsString()
   google_callback_url!: string;
+
+  @Expose({ name: 'REDIS_URL' })
+  @IsString()
+  redis_url!: string;
 }
