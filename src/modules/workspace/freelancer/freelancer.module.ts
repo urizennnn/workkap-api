@@ -9,7 +9,7 @@ import { OrderModule } from './order/order.module';
   imports: [
     GigsModule,
     OrderModule,
-    RegisterModule('freelancer', [GigsModule, OrderModule]),
+    RegisterModule('workspace/freelancer', [GigsModule, OrderModule]),
   ],
   providers: [FreelancerService],
   controllers: [FreelancerController],

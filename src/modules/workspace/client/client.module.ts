@@ -9,7 +9,7 @@ import { FreelancerModule } from '../freelancer/freelancer.module';
   imports: [
     OrderModule,
     FreelancerModule,
-    RegisterModule('client', [OrderModule, FreelancerModule]),
+    RegisterModule('workspace/client', [OrderModule, FreelancerModule]),
   ],
   providers: [ClientService],
   controllers: [ClientController],
