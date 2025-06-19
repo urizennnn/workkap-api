@@ -9,3 +9,4 @@ export {
   ClientFreelancerControllerSwagger as ClientFreelancerDocs,
 } from './workspace';
 export { errorSchema } from './error-schema';
+export { SocketDocs } from './sockets';
