@@ -2,7 +2,7 @@ import { Body, Controller, Post, Req } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Request } from 'express';
 import { CreateOrderSchema, CreateOrderSchemaType } from './dto';
-import { JwtPayload, NeedsAuth, ValidateSchema, OrderDocs } from 'libs';
+import { JwtPayload, ValidateSchema, OrderDocs, NeedsClientAuth } from 'libs';
 
 @Controller()
 @OrderDocs.controller
@@ -11,7 +11,7 @@ export class OrderController {
 
   @OrderDocs.createOrder
   @Post('create')
-  @NeedsAuth()
+  @NeedsClientAuth()
   @ValidateSchema({
     body: CreateOrderSchema,
   })

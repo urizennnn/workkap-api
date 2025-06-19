@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { GigsService } from './gigs.service';
-import { NeedsAuth, GigsDocs, ValidateSchema } from 'libs';
+import { NeedsFreelancerAuth, GigsDocs, ValidateSchema } from 'libs';
 import type { AuthorizedRequest } from 'libs/@types/express';
 import { GigSchemaType, GigSchema } from './dto';
 
@@ -19,7 +19,7 @@ export class GigsController {
   constructor(private readonly gigsService: GigsService) {}
 
   @GigsDocs.createGig
-  @NeedsAuth()
+  @NeedsFreelancerAuth()
   @Post('updateOrCreate')
   @ValidateSchema({
     body: GigSchema,
@@ -30,7 +30,7 @@ export class GigsController {
   }
 
   @GigsDocs.getGigs
-  @NeedsAuth()
+  @NeedsFreelancerAuth()
   @Get('fetch')
   async getGigs(@Req() req: Request) {
     const userId = (req as AuthorizedRequest).user.userId;
@@ -38,12 +38,12 @@ export class GigsController {
   }
 
   @GigsDocs.getGig
-  @NeedsAuth()
+  @NeedsFreelancerAuth()
   @Get('get/:identifier')
   async getGig(@Param('identifier') identifier: string) {
     return this.gigsService.getGig(identifier);
   }
-  @NeedsAuth()
+  @NeedsFreelancerAuth()
   @Delete('delete/:identifier')
   @GigsDocs.deleteGig
   async deleteGig(
