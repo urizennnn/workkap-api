@@ -14,7 +14,10 @@ export const OrderControllerSwagger = {
   controller: applyDecorators(ApiTags('Orders')),
 
   createOrder: applyDecorators(
-    ApiOperation({ summary: 'Create a new order' }),
+    ApiOperation({
+      summary: 'Create a new order',
+      description: 'POST /api/workspace/client/order/create',
+    }),
     ApiCreatedResponse({
       description: 'Order created',
       schema: { type: 'object' },
