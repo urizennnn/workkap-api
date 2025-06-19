@@ -8,6 +8,7 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { UserType } from 'libs/auth';
 import { errorSchema } from './error-schema';
 
 export const UserControllerSwagger = {
@@ -212,6 +213,26 @@ export const UserControllerSwagger = {
             country: 'Canada',
           },
         },
+      },
+    }),
+  ),
+
+  switchProfile: applyDecorators(
+    ApiOperation({ summary: 'Switch between client and freelancer profiles' }),
+    ApiOkResponse({ description: 'Profile switched and new tokens issued' }),
+    ApiBadRequestResponse({
+      description: 'Profile switch not allowed',
+      schema: errorSchema('Profile switch not allowed'),
+    }),
+    ApiBody({
+      description: 'Desired profile',
+      required: true,
+      schema: {
+        type: 'object',
+        properties: {
+          profile: { type: 'string', enum: Object.values(UserType) },
+        },
+        required: ['profile'],
       },
     }),
   ),

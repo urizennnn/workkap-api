@@ -1,13 +1,15 @@
 import { Body, Controller, Post, Get, Req, Patch } from '@nestjs/common';
 import { Request } from 'express';
 import { Google, Docs, NeedsAuth, ValidateSchema } from 'libs';
-import type { GoogleRequest } from 'libs/@types/express';
+import type { AuthorizedRequest, GoogleRequest } from 'libs/@types/express';
 import { UserService } from './user.service';
 import {
   LoginWithEmailAndPassword,
   LoginWithEmailAndPasswordSchema,
   SignUpWithEmailAndPassword,
   SignUpWithEmailAndPasswordSchema,
+  SwitchProfile,
+  SwitchProfileSchema,
 } from './dto';
 import { User } from '@prisma/client';
 
@@ -55,5 +57,14 @@ export class UserController {
   @Docs.updateUser
   async updateUser(@Body() body: Partial<User>) {
     return this.userService.updateUserDetails(body);
+  }
+
+  @Post('switch-profile')
+  @NeedsAuth()
+  @ValidateSchema({ body: SwitchProfileSchema })
+  @Docs.switchProfile
+  async switchProfile(@Req() req: Request, @Body() body: SwitchProfile) {
+    const { user } = req as AuthorizedRequest;
+    return this.userService.switchProfile(user, body.profile);
   }
 }

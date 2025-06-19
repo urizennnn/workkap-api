@@ -151,10 +151,20 @@ export class UserService {
             registrationMethod: RegistrationMethod.GOOGLE,
           },
         });
+        await this.prisma.freelancer.create({
+          data: { uid: user.id },
+        });
       } else if (user.registrationMethod !== RegistrationMethod.GOOGLE) {
         throw new BadRequestException(
           `An account was found with a different login method. Please use ${user.registrationMethod} to login.`,
         );
+      } else {
+        const freelancer = await this.prisma.freelancer.findUnique({
+          where: { uid: user.id },
+        });
+        if (!freelancer) {
+          await this.prisma.freelancer.create({ data: { uid: user.id } });
+        }
       }
 
       const tokenPayload: JwtPayload = {
@@ -175,6 +185,39 @@ export class UserService {
       }
       throw new InternalServerErrorException('Failed to login user');
     }
+  }
+
+  async switchProfile(
+    user: JwtPayload,
+    profile: UserType,
+  ): Promise<{
+    status: 'success';
+    data: { accessToken: string; refreshToken: string };
+  }> {
+    if (user.userType === profile) {
+      throw new BadRequestException('Already using this profile');
+    }
+
+    if (profile === UserType.FREELANCER) {
+      const existing = await this.prisma.freelancer.findUnique({
+        where: { uid: user.userId },
+      });
+      if (!existing) {
+        await this.prisma.freelancer.create({ data: { uid: user.userId } });
+      }
+    } else {
+      const existing = await this.prisma.client.findUnique({
+        where: { uid: user.userId },
+      });
+      if (!existing) {
+        await this.prisma.client.create({ data: { uid: user.userId } });
+      }
+    }
+
+    const payload: JwtPayload = { userId: user.userId, userType: profile };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.signRefreshToken(payload);
+    return { status: 'success', data: { accessToken, refreshToken } };
   }
 
   async updateUserDetails(
