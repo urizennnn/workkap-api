@@ -28,6 +28,8 @@ export class OrderService {
           freelancer: { connect: { id: orderData.freelancerId } },
           gig: { connect: { id: orderData.gigId } },
           client: { connect: { id: client.id } },
+          note: orderData.note ? orderData.note : null,
+          total: orderData.total,
           modeOfWorking: {
             create: {
               hourlyRate: {

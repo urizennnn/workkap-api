@@ -14,6 +14,8 @@ export const CreateOrderSchema = v.object({
       endDate: v.date(),
     }),
   }),
+  note: v.optional(v.string()),
+  total: v.optional(v.number()),
   payment: v.pipe(
     v.string(),
     v.enum(

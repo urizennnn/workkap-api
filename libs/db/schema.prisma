@@ -150,6 +150,9 @@ model Order {
   freelancerId    String
   freelancer      Freelancer     @relation(fields: [freelancerId], references: [id])
   payment         PaymentMethod
+  note            String?        @db.VarChar(500)
+  status          OrderStatus    @default(ACTIVE)
+  total           Int           @default(1)
   modeOfWorkingId String?        @unique
   modeOfWorking   ModeOfWorking? @relation("OrderMode", fields: [modeOfWorkingId], references: [id])
   createdAt       DateTime       @default(now())
