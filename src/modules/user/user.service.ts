@@ -41,6 +41,11 @@ export class UserService {
           username: payload.username,
         },
       });
+      await this.prisma.freelancer.create({
+        data: {
+          uid: user.id,
+        },
+      });
       this.logger.info(`User created successfully with ID: ${user.id}`);
       return { status: 'success', data: user };
     } catch (error: unknown) {
@@ -208,5 +213,4 @@ export class UserService {
       throw new InternalServerErrorException('Failed to update user details');
     }
   }
-
 }
