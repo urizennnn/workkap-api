@@ -3,7 +3,7 @@ import { ClientService } from './client.service';
 import { ClientController } from './client.controller';
 import { OrderModule } from './order/order.module';
 import { RegisterModule } from 'libs';
-import { FreelancerModule } from '../freelancer/freelancer.module';
+import { FreelancerModule } from './freelancer/freelancer.module';
 
 @Module({
   imports: [

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { FreelancerController } from './freelancer.controller';
 import { FreelancerService } from './freelancer.service';
-import { JwtService } from '@nestjs/jwt';
+import { JWTService } from 'libs';
 
 @Module({
   imports: [],
   controllers: [FreelancerController],
-  providers: [FreelancerService, JwtService],
+  providers: [FreelancerService, JWTService],
 })
 export class FreelancerModule {}
