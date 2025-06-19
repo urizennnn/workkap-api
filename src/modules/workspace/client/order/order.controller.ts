@@ -2,12 +2,14 @@ import { Body, Controller, Post, Req } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Request } from 'express';
 import { CreateOrderSchema, CreateOrderSchemaType } from './dto';
-import { JwtPayload, NeedsAuth, ValidateSchema } from 'libs';
+import { JwtPayload, NeedsAuth, ValidateSchema, OrderDocs } from 'libs';
 
 @Controller()
+@OrderDocs.controller
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  @OrderDocs.createOrder
   @Post('create')
   @NeedsAuth()
   @ValidateSchema({

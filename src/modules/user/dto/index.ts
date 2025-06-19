@@ -23,6 +23,6 @@ export type LoginWithEmailAndPassword = v.InferInput<
 import { UserType } from 'libs/auth';
 
 export const SwitchProfileSchema = v.object({
-  profile: v.pipe(v.string(), v.enum(UserType)),
+  profile: v.pipe(v.enum(UserType)),
 });
 export type SwitchProfile = v.InferInput<typeof SwitchProfileSchema>;
