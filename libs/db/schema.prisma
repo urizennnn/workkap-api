@@ -35,6 +35,15 @@ enum PackageTier {
   PREMIUM
 }
 
+enum GigStatus {
+  ACTIVE
+  PENDING
+  REQUIRES_MODIFICATION
+  DRAFT
+  DENIED
+  PAUSED
+}
+
 enum MediaType {
   IMAGE
   VIDEO
@@ -86,6 +95,7 @@ model Gig {
   mainCategory        String
   subCategory         String
   tools               String[]       @default([])
+  status              GigStatus      @default(DRAFT)
   tags                String[]       @default([])
   description         String         @db.VarChar(1000)
   packages            GigPackage[]
@@ -152,7 +162,7 @@ model Order {
   payment         PaymentMethod
   note            String?        @db.VarChar(500)
   status          OrderStatus    @default(ACTIVE)
-  total           Int           @default(1)
+  total           Int            @default(1)
   modeOfWorkingId String?        @unique
   modeOfWorking   ModeOfWorking? @relation("OrderMode", fields: [modeOfWorkingId], references: [id])
   createdAt       DateTime       @default(now())
