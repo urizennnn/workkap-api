@@ -33,13 +33,7 @@ import { MessageModule } from './modules/message/message.module';
       }),
       inject: [ConfigService],
     }),
-    RedisModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        redisUrl: pickFrom(config, 'redis.url', 'app'),
-      }),
-      inject: [ConfigService],
-    }),
+    RedisModule,
     UserModule,
     WorkspaceModule,
     MessageModule,

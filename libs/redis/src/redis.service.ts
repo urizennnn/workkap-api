@@ -1,20 +1,18 @@
-import {
-  Inject,
-  Injectable,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
 import { WorkkapLogger } from 'libs/common/logger';
-import { REDIS_URL } from './redis.module';
+import { ConfigService } from '@nestjs/config';
+import { pickFrom } from 'libs/config';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis;
+  private readonly url: string;
   constructor(
-    @Inject(REDIS_URL) private readonly url: string,
+    private readonly config: ConfigService,
     private readonly logger: WorkkapLogger,
   ) {
+    this.url = pickFrom(this.config, 'redis.url', 'app');
     this.client = new Redis(this.url);
   }
 
@@ -51,6 +49,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async getMessages(name: string): Promise<any[]> {
     const res = await this.client.lrange(`conv:${name}`, 0, -1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return res.map((item) => JSON.parse(item));
   }
 }

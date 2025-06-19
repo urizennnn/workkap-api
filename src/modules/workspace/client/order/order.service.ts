@@ -21,7 +21,9 @@ export class OrderService {
         this.prisma.user.findUnique({ where: { id: userId } }),
         this.prisma.client.findUnique({ where: { uid: userId } }),
         this.prisma.gig.findUnique({ where: { id: orderData.gigId } }),
-        this.prisma.freelancer.findUnique({ where: { id: orderData.freelancerId } }),
+        this.prisma.freelancer.findUnique({
+          where: { id: orderData.freelancerId },
+        }),
       ]);
 
       if (!user) throw new NotFoundException('User not found');

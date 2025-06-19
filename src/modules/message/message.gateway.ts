@@ -7,7 +7,13 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JWTService, JwtPayload } from 'libs';
+import { JWTService } from 'libs';
+
+interface GatewaySocket extends Socket {
+  data: {
+    userId?: string;
+  };
+}
 import { MessageService } from './message.service';
 import { SendMessageSchemaType } from './dto';
 
@@ -21,30 +27,33 @@ export class MessageGateway implements OnGatewayConnection {
     private readonly jwtService: JWTService,
   ) {}
 
-  async handleConnection(client: Socket) {
+  async handleConnection(client: GatewaySocket) {
     try {
       const token =
-        (client.handshake.auth && client.handshake.auth.token) ||
-        (client.handshake.query.token as string | undefined);
+        typeof client.handshake.auth?.token === 'string'
+          ? client.handshake.auth.token
+          : typeof client.handshake.query.token === 'string'
+            ? client.handshake.query.token
+            : undefined;
       if (!token) throw new Error('No token');
       const payload = this.jwtService.verify(token);
       client.data.userId = payload.userId;
-      client.join(payload.userId);
+      void client.join(payload.userId);
       const count = await this.messageService.countUnreadMessages(
         payload.userId,
       );
       client.emit('unread_count', { count });
-    } catch (e) {
+    } catch {
       client.disconnect(true);
     }
   }
 
   @SubscribeMessage('send_message')
   async handleSend(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: GatewaySocket,
     @MessageBody() body: SendMessageSchemaType,
   ) {
-    const senderId = client.data.userId as string;
+    const senderId = client.data.userId!;
     const message = await this.messageService.sendMessage(senderId, body);
     this.server.to(body.receiverId).emit('new_message', message);
     client.emit('new_message', message);
@@ -56,10 +65,10 @@ export class MessageGateway implements OnGatewayConnection {
 
   @SubscribeMessage('read_messages')
   async handleRead(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: GatewaySocket,
     @MessageBody() data: { name: string },
   ) {
-    const userId = client.data.userId as string;
+    const userId = client.data.userId!;
     await this.messageService.markMessagesAsRead(data.name, userId);
     const count = await this.messageService.countUnreadMessages(userId);
     client.emit('unread_count', { count });
