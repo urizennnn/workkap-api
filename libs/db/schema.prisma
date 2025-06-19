@@ -14,6 +14,13 @@ enum RegistrationMethod {
   APPLE
 }
 
+enum PaymentMethod {
+  PAYPAL
+  VISA_CARD
+  MASTER_CARD
+  BANK_TRANSFER
+}
+
 enum OrderStatus {
   ACTIVE
   PENDING
@@ -95,8 +102,8 @@ model Gig {
 
 model GigPackage {
   id                String      @id @default(uuid())
-  gig               Gig         @relation(fields: [gigId], references: [id])
   gigId             String
+  gig               Gig         @relation(fields: [gigId], references: [id])
   tier              PackageTier
   name              String
   description       String
@@ -113,8 +120,8 @@ model GigPackage {
 
 model ExtraService {
   id           String  @id @default(uuid())
-  gig          Gig     @relation(fields: [gigId], references: [id])
   gigId        String
+  gig          Gig     @relation(fields: [gigId], references: [id])
   name         String
   deliveryTime Int
   price        Decimal @db.Decimal(10, 2)
@@ -122,36 +129,68 @@ model ExtraService {
 
 model Question {
   id    String @id @default(uuid())
-  gig   Gig    @relation(fields: [gigId], references: [id])
   gigId String
+  gig   Gig    @relation(fields: [gigId], references: [id])
   text  String
 }
 
 model MediaItem {
   id    String    @id @default(uuid())
-  gig   Gig       @relation(fields: [gigId], references: [id])
   gigId String
+  gig   Gig       @relation(fields: [gigId], references: [id])
   type  MediaType
   url   String
 }
 
 model Order {
-  id           String     @id @default(uuid())
-  gigId        String
-  gig          Gig        @relation(fields: [gigId], references: [id])
-  clientId     String
-  client       Client     @relation(fields: [clientId], references: [id])
-  freelancerId String
-  freelancer   Freelancer @relation(fields: [freelancerId], references: [id])
-  packageId    String
-  package      GigPackage @relation(fields: [packageId], references: [id])
-  status       String     @default("ACTIVE") @map("order_status")
-  totalPrice   Decimal    @db.Decimal(10, 2)
-  amount       Int        @db.Integer()
-  Note         String
-  DueDate      DateTime
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id              String         @id @default(uuid())
+  gigId           String
+  gig             Gig            @relation(fields: [gigId], references: [id])
+  clientId        String
+  client          Client         @relation(fields: [clientId], references: [id])
+  freelancerId    String
+  freelancer      Freelancer     @relation(fields: [freelancerId], references: [id])
+  packageId       String
+  package         GigPackage     @relation(fields: [packageId], references: [id])
+  status          OrderStatus    @default(ACTIVE)
+  totalPrice      Decimal        @db.Decimal(10, 2)
+  amount          Int
+  note            String
+  dueDate         DateTime
+  payment         PaymentMethod
+  modeOfWorkingId String?        @unique
+  modeOfWorking   ModeOfWorking? @relation("OrderMode", fields: [modeOfWorkingId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@map("orders")
+}
+
+model ModeOfWorking {
+  id         String      @id @default(uuid())
+  order      Order?      @relation("OrderMode")
+  hourlyRate HourlyRate? @relation("ModeHourlyRate")
+  contract   Contract?   @relation("ModeContract")
+
+  @@map("mode_of_workings")
+}
+
+model HourlyRate {
+  id              String        @id @default(uuid())
+  amount          Decimal       @db.Decimal(10, 2)
+  maxAmount       Decimal       @db.Decimal(10, 2)
+  modeOfWorkingId String        @unique
+  mode            ModeOfWorking @relation("ModeHourlyRate", fields: [modeOfWorkingId], references: [id])
+
+  @@map("hourly_rates")
+}
+
+model Contract {
+  id              String        @id @default(uuid())
+  startDate       DateTime
+  endDate         DateTime
+  modeOfWorkingId String        @unique
+  mode            ModeOfWorking @relation("ModeContract", fields: [modeOfWorkingId], references: [id])
+
+  @@map("contracts")
 }

@@ -208,4 +208,5 @@ export class UserService {
       throw new InternalServerErrorException('Failed to update user details');
     }
   }
+
 }
