@@ -4,11 +4,6 @@ import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 export const SocketDocs = {
   controller: applyDecorators(
     ApiTags('Sockets'),
-    ApiOperation({
-      summary: 'WebSocket connection',
-      description:
-        'Connect to the Socket.IO server using a JWT token. Provide the token using the "auth.token" option or as a "token" query parameter.',
-    }),
   ),
 
   sendMessage: applyDecorators(
