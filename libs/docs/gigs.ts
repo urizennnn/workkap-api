@@ -49,6 +49,68 @@ export const GigsControllerSwagger = {
           tags: { type: 'array', items: { type: 'string' } },
           description: { type: 'string' },
           thirdPartyAgreement: { type: 'boolean' },
+          package: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                tier: { type: 'string' },
+                name: { type: 'string' },
+                description: { type: 'string' },
+                deliveryTime: { type: 'number' },
+                customAssetDesign: { type: 'boolean' },
+                sourceFile: { type: 'boolean' },
+                contentUpload: { type: 'boolean' },
+                convertToHtmlCss: { type: 'boolean' },
+                revisions: { type: 'number' },
+                price: { type: 'number' },
+                TotalPrice: { type: 'number' },
+              },
+            },
+          },
+          extraServices: {
+            type: 'object',
+            properties: {
+              deliveryTime: { type: 'number' },
+              extraPrice: { type: 'number' },
+            },
+          },
+          images: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                url: { type: 'string' },
+                alt: { type: 'string' },
+              },
+            },
+          },
+          video: {
+            type: 'object',
+            properties: {
+              url: { type: 'string' },
+              thumbnail: { type: 'string' },
+            },
+          },
+          documents: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                url: { type: 'string' },
+                name: { type: 'string' },
+              },
+            },
+          },
+          questions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' },
+              },
+            },
+          },
         },
         required: ['title', 'mainCategory', 'subCategory', 'description'],
       },

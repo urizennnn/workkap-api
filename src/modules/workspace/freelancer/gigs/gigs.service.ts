@@ -1,4 +1,4 @@
-import { Gig } from '@prisma/client';
+import { Gig, MediaType } from '@prisma/client';
 import {
   Injectable,
   NotFoundException,
@@ -18,43 +18,138 @@ export class GigsService {
 
   async createGig(data: GigSchemaType, userId: string): Promise<Gig> {
     try {
-      if (data.slug) {
-        const existing = await this.prisma.gig.findUnique({
-          where: { slug: data.slug },
+      return await this.prisma.$transaction(async (tx) => {
+        const freelancer = await tx.freelancer.findUnique({
+          where: { uid: userId },
         });
-        if (existing) {
-          this.logger.info(`Updating gig with slug "${data.slug}"`);
-          return this.prisma.gig.update({
-            where: { slug: data.slug },
-            data,
-          });
-        }
-      }
+        if (!freelancer) throw new NotFoundException('Freelancer not found');
 
-      const gig = await this.prisma.$transaction(async (tx) => {
-        await tx.user.findUniqueOrThrow({ where: { id: userId } });
+        const media = this.buildMedia(data);
+        const packages = data.package?.map((p) => ({
+          ...p,
+          totalPrice: p.TotalPrice ?? p.price,
+        }));
+        const extras = data.extraServices
+          ? [
+              {
+                name: 'Additional service',
+                deliveryTime: data.extraServices.deliveryTime ?? 0,
+                price: data.extraServices.extraPrice ?? 0,
+              },
+            ]
+          : undefined;
+
+        const questions = data.questions ?? [];
+
+        if (data.slug) {
+          const existing = await tx.gig.findUnique({
+            where: { slug: data.slug },
+          });
+          if (existing) {
+            if (existing.userId !== freelancer.id) {
+              throw new ForbiddenException('Cannot update this gig');
+            }
+            this.logger.info(`Updating gig with slug "${data.slug}"`);
+            return tx.gig.update({
+              where: { slug: data.slug },
+              data: {
+                title: data.title,
+                mainCategory: data.mainCategory,
+                subCategory: data.subCategory,
+                tools: data.tools ?? [],
+                tags: data.tags ?? [],
+                description: data.description,
+                thirdPartyAgreement: data.thirdPartyAgreement ?? false,
+                packages: packages
+                  ? { deleteMany: {}, create: packages }
+                  : undefined,
+                extras: extras
+                  ? { deleteMany: {}, create: extras }
+                  : { deleteMany: {} },
+                questions: questions.length
+                  ? { deleteMany: {}, create: questions }
+                  : { deleteMany: {} },
+                media: media.length
+                  ? { deleteMany: {}, create: media }
+                  : { deleteMany: {} },
+              },
+              include: {
+                packages: true,
+                extras: true,
+                questions: true,
+                media: true,
+              },
+            });
+          }
+        }
+
         const slug = this.slugify.slugify(data.title ?? 'gig');
         this.logger.info(`Creating new gig with slug "${slug}"`);
         return tx.gig.create({
           data: {
-            ...data,
+            title: data.title,
+            mainCategory: data.mainCategory,
+            subCategory: data.subCategory,
+            tools: data.tools ?? [],
+            tags: data.tags ?? [],
+            description: data.description,
+            thirdPartyAgreement: data.thirdPartyAgreement ?? false,
             slug,
-            user: { connect: { id: userId } },
+            user: { connect: { id: freelancer.id } },
+            packages: packages ? { create: packages } : undefined,
+            extras: extras ? { create: extras } : undefined,
+            questions: questions.length ? { create: questions } : undefined,
+            media: media.length ? { create: media } : undefined,
+          },
+          include: {
+            packages: true,
+            extras: true,
+            questions: true,
+            media: true,
           },
         });
       });
-
-      this.logger.info(`Gig created with ID "${gig.id}"`);
-      return gig;
     } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException
+      )
+        throw error;
       this.logger.error(`Failed to create gig for user "${userId}"`, error);
       throw new InternalServerErrorException('Unable to create or update gig');
     }
   }
 
+  private buildMedia(data: GigSchemaType) {
+    const media = [] as Array<{ type: MediaType; url: string }>;
+    if (data.images) {
+      media.push(
+        ...data.images.map((m) => ({ type: MediaType.IMAGE, url: m.url })),
+      );
+    }
+    if (data.video) {
+      media.push({ type: MediaType.VIDEO, url: data.video.url });
+    }
+    if (data.documents) {
+      media.push(
+        ...data.documents.map((d) => ({
+          type: MediaType.DOCUMENT,
+          url: d.url,
+        })),
+      );
+    }
+    return media;
+  }
+
   async fetchGigs(userId: string): Promise<Gig[]> {
     try {
-      return await this.prisma.gig.findMany({ where: { userId } });
+      const freelancer = await this.prisma.freelancer.findUnique({
+        where: { uid: userId },
+      });
+      if (!freelancer) return [];
+      return await this.prisma.gig.findMany({
+        where: { userId: freelancer.id },
+      });
     } catch (error) {
       this.logger.error(`Failed to fetch gigs for user "${userId}"`, error);
       throw new InternalServerErrorException('Unable to fetch gigs');
@@ -83,7 +178,10 @@ export class GigsService {
   async deleteGig(identifier: string, userId: string): Promise<void> {
     try {
       const gig = await this.getGig(identifier);
-      if (gig.userId !== userId) {
+      const freelancer = await this.prisma.freelancer.findUnique({
+        where: { uid: userId },
+      });
+      if (!freelancer || gig.userId !== freelancer.id) {
         throw new ForbiddenException(`Cannot delete gig "${identifier}"`);
       }
       await this.prisma.gig.delete({ where: { id: gig.id } });
