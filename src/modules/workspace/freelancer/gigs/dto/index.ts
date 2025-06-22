@@ -23,7 +23,7 @@ export const GigSchema = v.object({
         convertToHtmlCss: v.optional(v.boolean()),
         revisions: v.optional(v.number()),
         price: v.number(),
-        TotalPrice: v.optional(v.number()),
+        totalPrice: v.optional(v.number()),
       }),
     ),
   ),

@@ -27,7 +27,7 @@ export class GigsService {
         const media = this.buildMedia(data);
         const packages = data.package?.map((p) => ({
           ...p,
-          totalPrice: p.TotalPrice ?? p.price,
+          totalPrice: p.totalPrice ?? p.price,
         }));
         const extras = data.extraServices
           ? [
@@ -116,6 +116,7 @@ export class GigsService {
       )
         throw error;
       this.logger.error(`Failed to create gig for user "${userId}"`, error);
+      console.error(error);
       throw new InternalServerErrorException('Unable to create or update gig');
     }
   }
