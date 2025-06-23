@@ -6,7 +6,14 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { LoginWithEmailAndPassword, SignUpWithEmailAndPassword } from './dto';
+import {
+  LoginWithEmailAndPassword,
+  SignUpWithEmailAndPassword,
+  VerifyEmail,
+  ResendOtp,
+  ForgotPassword,
+  ResetPassword,
+} from './dto';
 import { RegistrationMethod, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { comparePassword, hashPassword } from './utils';
@@ -16,6 +23,8 @@ import {
   PrismaService,
   UserType,
   WorkkapLogger,
+  SengridService,
+  RedisService,
 } from 'libs';
 
 @Injectable()
@@ -24,7 +33,13 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly logger: WorkkapLogger,
     private readonly jwtService: JWTService,
+    private readonly email: SengridService,
+    private readonly redis: RedisService,
   ) {}
+
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
 
   async signupWithEmailAndPassword(
     payload: SignUpWithEmailAndPassword,
@@ -46,6 +61,9 @@ export class UserService {
           uid: user.id,
         },
       });
+      const code = this.generateOtp();
+      await this.redis.storeOtp(user.id, code);
+      await this.email.sendVerificationEmail(user.email!, code);
       this.logger.info(`User created successfully with ID: ${user.id}`);
       return { status: 'success', data: user };
     } catch (error: unknown) {
@@ -95,6 +113,10 @@ export class UserService {
           `Invalid password for user with email: ${payload.email}`,
         );
         throw new UnauthorizedException('Invalid email or password');
+      }
+
+      if (!user.isVerified) {
+        throw new UnauthorizedException('Email not verified');
       }
 
       this.logger.info(`User logged in successfully with ID: ${user.id}`);
@@ -255,5 +277,65 @@ export class UserService {
       }
       throw new InternalServerErrorException('Failed to update user details');
     }
+  }
+
+  async verifyEmail(payload: VerifyEmail): Promise<{ status: 'success' }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const code = await this.redis.getOtp(user.id);
+    if (!code || code !== payload.code) {
+      throw new BadRequestException('Invalid or expired code');
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isVerified: true },
+    });
+    await this.redis.deleteOtp(user.id);
+    return { status: 'success' };
+  }
+
+  async resendOtp(payload: ResendOtp): Promise<{ status: 'success' }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.isVerified) {
+      throw new BadRequestException('User already verified');
+    }
+    const code = this.generateOtp();
+    await this.redis.storeOtp(user.id, code);
+    await this.email.sendVerificationEmail(user.email!, code);
+    return { status: 'success' };
+  }
+
+  async forgotPassword(payload: ForgotPassword): Promise<{ status: 'success' }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const code = this.generateOtp();
+    await this.redis.storeOtp(user.id, code, 600, 'reset');
+    await this.email.sendResetPasswordEmail(user.email!, code);
+    return { status: 'success' };
+  }
+
+  async resetPassword(payload: ResetPassword): Promise<{ status: 'success' }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const code = await this.redis.getOtp(user.id, 'reset');
+    if (!code || code !== payload.code) {
+      throw new BadRequestException('Invalid or expired code');
+    }
+    const hashed = await hashPassword(payload.newPassword);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashed },
+    });
+    await this.redis.deleteOtp(user.id, 'reset');
+    return { status: 'success' };
   }
 }

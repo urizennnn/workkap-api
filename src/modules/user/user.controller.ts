@@ -10,6 +10,14 @@ import {
   SignUpWithEmailAndPasswordSchema,
   SwitchProfile,
   SwitchProfileSchema,
+  VerifyEmail,
+  VerifyEmailSchema,
+  ResendOtp,
+  ResendOtpSchema,
+  ForgotPassword,
+  ForgotPasswordSchema,
+  ResetPassword,
+  ResetPasswordSchema,
 } from './dto';
 import { User } from '@prisma/client';
 
@@ -36,6 +44,30 @@ export class UserController {
   })
   async loginWithEmailAndPassword(@Body() payload: LoginWithEmailAndPassword) {
     return this.userService.loginWithEmailAndPassword(payload);
+  }
+
+  @Post('verify-email')
+  @ValidateSchema({ body: VerifyEmailSchema })
+  async verifyEmail(@Body() payload: VerifyEmail) {
+    return this.userService.verifyEmail(payload);
+  }
+
+  @Post('resend-otp')
+  @ValidateSchema({ body: ResendOtpSchema })
+  async resendOtp(@Body() payload: ResendOtp) {
+    return this.userService.resendOtp(payload);
+  }
+
+  @Post('forgot-password')
+  @ValidateSchema({ body: ForgotPasswordSchema })
+  async forgotPassword(@Body() payload: ForgotPassword) {
+    return this.userService.forgotPassword(payload);
+  }
+
+  @Post('reset-password')
+  @ValidateSchema({ body: ResetPasswordSchema })
+  async resetPassword(@Body() payload: ResetPassword) {
+    return this.userService.resetPassword(payload);
   }
 
   @Get('login/google')
