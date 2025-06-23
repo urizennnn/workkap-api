@@ -50,6 +50,7 @@ export class UserService {
       const user = await this.prisma.user.create({
         data: {
           email: payload.email,
+          country: payload.country,
           password: hashedPassword,
           fullName: payload.fullName,
           registrationMethod: RegistrationMethod.COMBINATION,
