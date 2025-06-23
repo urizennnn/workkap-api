@@ -69,4 +69,13 @@ export class AppConfigSchema {
   @Expose({ name: 'REDIS_URL' })
   @IsString()
   redis_url!: string;
+
+  @Expose({ name: 'SENDGRID_KEY' })
+  @IsString()
+  sendgrid_key: string;
+
+  @Expose({ name: 'SENDGRID_FROM_EMAIL' })
+  @IsOptional()
+  @IsString()
+  sendgrid_from_email: string;
 }

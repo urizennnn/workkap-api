@@ -43,6 +43,10 @@ export const appConfigFactory = registerAs('app', () => {
     redis: {
       url: env.redis_url,
     },
+    sendgrid: {
+      api_key: env.sendgrid_key,
+      from_email: env.sendgrid_from_email,
+    },
   } as const;
 });
 
