@@ -58,6 +58,7 @@ model User {
   profilePictureUrl  String?
   username           String?            @unique
   fullName           String?
+  isVerified        Boolean            @default(false)
   registrationMethod RegistrationMethod @default(COMBINATION)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt

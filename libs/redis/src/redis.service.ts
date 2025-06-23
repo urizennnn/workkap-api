@@ -52,4 +52,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return res.map((item) => JSON.parse(item));
   }
+
+  async storeOtp(userId: string, otp: string, ttl = 300, prefix = 'otp'): Promise<void> {
+    await this.client.set(`${prefix}:${userId}`, otp, 'EX', ttl);
+  }
+
+  async getOtp(userId: string, prefix = 'otp'): Promise<string | null> {
+    return this.client.get(`${prefix}:${userId}`);
+  }
+
+  async deleteOtp(userId: string, prefix = 'otp'): Promise<void> {
+    await this.client.del(`${prefix}:${userId}`);
+  }
 }
