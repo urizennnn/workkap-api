@@ -20,7 +20,14 @@ export const OrderControllerSwagger = {
     }),
     ApiCreatedResponse({
       description: 'Order created',
-      schema: { type: 'object' },
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Order created successfully' },
+          data: { type: 'object' },
+        },
+      },
     }),
     ApiUnauthorizedResponse({
       description: 'Unauthorized',

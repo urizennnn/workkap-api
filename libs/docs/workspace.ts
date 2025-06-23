@@ -16,12 +16,19 @@ export const WorkspaceControllerSwagger = {
       schema: {
         type: 'object',
         properties: {
-          message: { type: 'string', example: 'workspace module' },
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'workspace module' },
+            },
+          },
         },
       },
     }),
   ),
-};
+}; 
 
 export const ClientControllerSwagger = {
   controller: applyDecorators(ApiTags('Client Workspace')),
@@ -32,7 +39,14 @@ export const ClientControllerSwagger = {
       schema: {
         type: 'object',
         properties: {
-          message: { type: 'string', example: 'client workspace' },
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'client workspace' },
+            },
+          },
         },
       },
     }),
@@ -48,7 +62,14 @@ export const FreelancerWorkspaceControllerSwagger = {
       schema: {
         type: 'object',
         properties: {
-          message: { type: 'string', example: 'freelancer workspace' },
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'freelancer workspace' },
+            },
+          },
         },
       },
     }),
@@ -61,7 +82,14 @@ export const FreelancerOrdersControllerSwagger = {
     ApiOperation({ summary: 'List orders for the authenticated freelancer' }),
     ApiOkResponse({
       description: 'Orders grouped by status',
-      schema: { type: 'object' },
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'object' },
+        },
+      },
     }),
     ApiUnauthorizedResponse({
       description: 'Unauthorized',
@@ -76,7 +104,14 @@ export const ClientFreelancerControllerSwagger = {
     ApiOperation({ summary: 'Retrieve all freelancers with their gigs' }),
     ApiOkResponse({
       description: 'List of freelancers',
-      schema: { type: 'array', items: { type: 'object' } },
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'array', items: { type: 'object' } },
+        },
+      },
     }),
   ),
 };
