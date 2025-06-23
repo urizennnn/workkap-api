@@ -22,6 +22,10 @@ export const UserControllerSwagger = {
         type: 'object',
         properties: {
           status: { type: 'string', example: 'success' },
+          message: {
+            type: 'string',
+            example: 'User account created successfully',
+          },
           data: {
             type: 'object',
             properties: {
@@ -75,6 +79,7 @@ export const UserControllerSwagger = {
         type: 'object',
         properties: {
           status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Login successful' },
           data: {
             type: 'object',
             properties: {
@@ -143,6 +148,7 @@ export const UserControllerSwagger = {
         type: 'object',
         properties: {
           status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Login successful' },
           data: {
             type: 'object',
             properties: {
@@ -167,6 +173,7 @@ export const UserControllerSwagger = {
         type: 'object',
         properties: {
           status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'User updated successfully' },
           data: {
             type: 'object',
             properties: {
@@ -219,7 +226,20 @@ export const UserControllerSwagger = {
 
   switchProfile: applyDecorators(
     ApiOperation({ summary: 'Switch between client and freelancer profiles' }),
-    ApiOkResponse({ description: 'Profile switched and new tokens issued' }),
+    ApiOkResponse({
+      description: 'Profile switched and new tokens issued',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: {
+            type: 'string',
+            example: 'Profile switched successfully',
+          },
+          data: { type: 'object' },
+        },
+      },
+    }),
     ApiBadRequestResponse({
       description: 'Profile switch not allowed',
       schema: errorSchema('Profile switch not allowed'),

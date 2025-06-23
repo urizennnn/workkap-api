@@ -23,6 +23,10 @@ export const GigsControllerSwagger = {
         type: 'object',
         properties: {
           status: { type: 'string', example: 'success' },
+          message: {
+            type: 'string',
+            example: 'Gig created or updated successfully',
+          },
           data: { type: 'object' },
         },
       },
