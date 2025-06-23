@@ -77,6 +77,9 @@ export class UserService {
       ) {
         throw new ConflictException('Email or username already exists');
       }
+      if (error instanceof Error) {
+        console.log(JSON.stringify(error.message));
+      }
       throw new InternalServerErrorException('Failed to create user');
     }
   }
@@ -310,7 +313,9 @@ export class UserService {
     return { status: 'success' };
   }
 
-  async forgotPassword(payload: ForgotPassword): Promise<{ status: 'success' }> {
+  async forgotPassword(
+    payload: ForgotPassword,
+  ): Promise<{ status: 'success' }> {
     const user = await this.prisma.user.findUnique({
       where: { email: payload.email },
     });

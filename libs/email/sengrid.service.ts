@@ -6,7 +6,6 @@ import { resetPasswordTemplate, verificationTemplate } from './templates';
 
 @Injectable()
 export class SengridService {
-  private readonly sg: sg.MailService;
   private readonly setApiKey: string;
   private sendgridFromEmail: string;
   constructor(private readonly cfg: ConfigService) {
@@ -16,7 +15,7 @@ export class SengridService {
   }
 
   async sendEmail(to: string, subject: string, html: string) {
-    await this.sg.send({
+    await sg.send({
       to,
       from: this.sendgridFromEmail,
       subject,

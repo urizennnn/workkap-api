@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { UserType } from 'libs/auth';
 
 export const SignUpWithEmailAndPasswordSchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -19,8 +20,6 @@ export const LoginWithEmailAndPasswordSchema = v.object({
 export type LoginWithEmailAndPassword = v.InferInput<
   typeof LoginWithEmailAndPasswordSchema
 >;
-
-import { UserType } from 'libs/auth';
 
 export const SwitchProfileSchema = v.object({
   profile: v.pipe(v.enum(UserType)),

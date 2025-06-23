@@ -5,4 +5,4 @@ export * from './common/index';
 export * from './docs/index';
 export * from './utils';
 export * from './redis';
-export * from './email';
+export * from './email/index';

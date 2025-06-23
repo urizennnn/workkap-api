@@ -259,7 +259,10 @@ export const UserControllerSwagger = {
 
   verifyEmail: applyDecorators(
     ApiOperation({ summary: 'Verify user email with OTP' }),
-    ApiOkResponse({ description: 'Email verified', schema: { type: 'object' } }),
+    ApiOkResponse({
+      description: 'Email verified',
+      schema: { type: 'object' },
+    }),
     ApiBadRequestResponse({
       description: 'Invalid code',
       schema: errorSchema('Invalid or expired code'),
@@ -281,7 +284,11 @@ export const UserControllerSwagger = {
     ApiOkResponse({ description: 'OTP resent', schema: { type: 'object' } }),
     ApiBody({
       required: true,
-      schema: { type: 'object', properties: { email: { type: 'string', format: 'email' } }, required: ['email'] },
+      schema: {
+        type: 'object',
+        properties: { email: { type: 'string', format: 'email' } },
+        required: ['email'],
+      },
     }),
   ),
 
@@ -290,13 +297,20 @@ export const UserControllerSwagger = {
     ApiOkResponse({ description: 'OTP sent', schema: { type: 'object' } }),
     ApiBody({
       required: true,
-      schema: { type: 'object', properties: { email: { type: 'string', format: 'email' } }, required: ['email'] },
+      schema: {
+        type: 'object',
+        properties: { email: { type: 'string', format: 'email' } },
+        required: ['email'],
+      },
     }),
   ),
 
   resetPassword: applyDecorators(
     ApiOperation({ summary: 'Reset password using OTP' }),
-    ApiOkResponse({ description: 'Password reset', schema: { type: 'object' } }),
+    ApiOkResponse({
+      description: 'Password reset',
+      schema: { type: 'object' },
+    }),
     ApiBadRequestResponse({
       description: 'Invalid code',
       schema: errorSchema('Invalid or expired code'),
