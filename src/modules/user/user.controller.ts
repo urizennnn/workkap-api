@@ -46,24 +46,28 @@ export class UserController {
     return this.userService.loginWithEmailAndPassword(payload);
   }
 
+  @Docs.verifyEmail
   @Post('verify-email')
   @ValidateSchema({ body: VerifyEmailSchema })
   async verifyEmail(@Body() payload: VerifyEmail) {
     return this.userService.verifyEmail(payload);
   }
 
+  @Docs.resendOtp
   @Post('resend-otp')
   @ValidateSchema({ body: ResendOtpSchema })
   async resendOtp(@Body() payload: ResendOtp) {
     return this.userService.resendOtp(payload);
   }
 
+  @Docs.forgotPassword
   @Post('forgot-password')
   @ValidateSchema({ body: ForgotPasswordSchema })
   async forgotPassword(@Body() payload: ForgotPassword) {
     return this.userService.forgotPassword(payload);
   }
 
+  @Docs.resetPassword
   @Post('reset-password')
   @ValidateSchema({ body: ResetPasswordSchema })
   async resetPassword(@Body() payload: ResetPassword) {
