@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as sg from '@sendgrid/mail';
 import { pickFrom } from 'libs/config';
-import {
-  resetPasswordTemplate,
-  verificationTemplate,
-} from './templates';
+import { resetPasswordTemplate, verificationTemplate } from './templates';
 
 @Injectable()
 export class SengridService {
@@ -13,8 +10,8 @@ export class SengridService {
   private readonly setApiKey: string;
   private sendgridFromEmail: string;
   constructor(private readonly cfg: ConfigService) {
-    this.setApiKey = pickFrom(cfg, 'sendgrid.api_key');
-    this.sendgridFromEmail = pickFrom(cfg, 'sendgrid.from_email');
+    this.setApiKey = pickFrom(this.cfg, 'sendgrid.api_key', 'app');
+    this.sendgridFromEmail = pickFrom(this.cfg, 'sendgrid.from_email', 'app');
     sg.setApiKey(this.setApiKey);
   }
 
@@ -28,18 +25,10 @@ export class SengridService {
   }
 
   async sendVerificationEmail(to: string, code: string) {
-    await this.sendEmail(
-      to,
-      'Verify your email',
-      verificationTemplate(code),
-    );
+    await this.sendEmail(to, 'Verify your email', verificationTemplate(code));
   }
 
   async sendResetPasswordEmail(to: string, code: string) {
-    await this.sendEmail(
-      to,
-      'Password reset',
-      resetPasswordTemplate(code),
-    );
+    await this.sendEmail(to, 'Password reset', resetPasswordTemplate(code));
   }
 }
