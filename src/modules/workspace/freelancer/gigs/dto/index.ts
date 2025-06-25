@@ -16,7 +16,7 @@ export const GigSchema = v.object({
         tier: v.pipe(v.enum(PackageTier, 'Invalid package tier')),
         name: v.string(),
         description: v.string(),
-        deliveryTime: v.number(),
+        deliveryTime: v.string(),
         customAssetDesign: v.optional(v.boolean()),
         sourceFile: v.optional(v.boolean()),
         contentUpload: v.optional(v.boolean()),
@@ -29,7 +29,7 @@ export const GigSchema = v.object({
   ),
   extraServices: v.optional(
     v.object({
-      deliveryTime: v.optional(v.number()),
+      deliveryTime: v.optional(v.string()),
       extraPrice: v.optional(v.number()),
     }),
   ),
