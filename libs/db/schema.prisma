@@ -118,7 +118,7 @@ model GigPackage {
   tier              PackageTier
   name              String
   description       String
-  deliveryTime      Int
+  deliveryTime      String
   customAssetDesign Boolean     @default(false)
   sourceFile        Boolean     @default(false)
   contentUpload     Boolean     @default(false)
@@ -133,7 +133,7 @@ model ExtraService {
   gigId        String
   gig          Gig     @relation(fields: [gigId], references: [id])
   name         String
-  deliveryTime Int
+  deliveryTime String
   price        Decimal @db.Decimal(10, 2)
 }
 

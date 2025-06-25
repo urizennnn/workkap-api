@@ -53,7 +53,7 @@ CREATE TABLE "GigPackage" (
     "tier" "PackageTier" NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "deliveryTime" INTEGER NOT NULL,
+    "deliveryTime" TEXT NOT NULL,
     "customAssetDesign" BOOLEAN NOT NULL DEFAULT false,
     "sourceFile" BOOLEAN NOT NULL DEFAULT false,
     "contentUpload" BOOLEAN NOT NULL DEFAULT false,
@@ -70,7 +70,7 @@ CREATE TABLE "ExtraService" (
     "id" TEXT NOT NULL,
     "gigId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "deliveryTime" INTEGER NOT NULL,
+    "deliveryTime" TEXT NOT NULL,
     "price" DECIMAL(10,2) NOT NULL,
 
     CONSTRAINT "ExtraService_pkey" PRIMARY KEY ("id")

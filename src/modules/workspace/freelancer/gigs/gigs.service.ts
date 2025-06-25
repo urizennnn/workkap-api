@@ -33,7 +33,7 @@ export class GigsService {
           ? [
               {
                 name: 'Additional service',
-                deliveryTime: data.extraServices.deliveryTime ?? 0,
+                deliveryTime: data.extraServices.deliveryTime ?? '',
                 price: data.extraServices.extraPrice ?? 0,
               },
             ]

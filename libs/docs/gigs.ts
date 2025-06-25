@@ -61,7 +61,7 @@ export const GigsControllerSwagger = {
                 tier: { type: 'string' },
                 name: { type: 'string' },
                 description: { type: 'string' },
-                deliveryTime: { type: 'number' },
+                deliveryTime: { type: 'string' },
                 customAssetDesign: { type: 'boolean' },
                 sourceFile: { type: 'boolean' },
                 contentUpload: { type: 'boolean' },
@@ -75,7 +75,7 @@ export const GigsControllerSwagger = {
           extraServices: {
             type: 'object',
             properties: {
-              deliveryTime: { type: 'number' },
+              deliveryTime: { type: 'string' },
               extraPrice: { type: 'number' },
             },
           },
