@@ -8,7 +8,7 @@ export const GigSchema = v.object({
   subCategory: v.string(),
   tools: v.optional(v.array(v.string())),
   tags: v.optional(v.array(v.string())),
-  description: v.string(),
+  description: v.optional(v.string()),
   thirdPartyAgreement: v.optional(v.boolean()),
   package: v.optional(
     v.array(
