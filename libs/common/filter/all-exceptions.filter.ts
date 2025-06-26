@@ -17,26 +17,31 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { status, message } = this.normalizeException(exception);
+    const { status, body } = this.normalizeException(exception);
     this.logger.error(`${request.method} ${request.url}`, exception);
-    response.status(status).json({ status: 'error', message });
+    response.status(status).json(body);
   }
 
   private normalizeException(exception: unknown): {
     status: number;
-    message: string;
+    body: Record<string, unknown>;
   } {
     if (exception instanceof HttpException) {
       const resp = exception.getResponse();
-      const message =
-        typeof resp === 'string'
-          ? resp
-          : (resp as { message?: string })?.message || exception.message;
-      return { status: exception.getStatus(), message };
+      const status = exception.getStatus();
+      if (typeof resp === 'string') {
+        return { status, body: { status: 'error', message: resp } };
+      }
+      return {
+        status,
+        body: { status: 'error', ...(resp as Record<string, unknown>) },
+      };
     }
+    const message =
+      exception instanceof Error ? exception.message : 'Internal server error';
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: 'Internal server error',
+      body: { status: 'error', message },
     };
   }
 }
