@@ -98,7 +98,7 @@ model Gig {
   tools               String[]       @default([])
   status              GigStatus      @default(DRAFT)
   tags                String[]       @default([])
-  description         String?         @db.VarChar(1000)
+  description         String?         @db.VarChar(1000) @default("")
   packages            GigPackage[]
   extras              ExtraService[]
   questions           Question[]
@@ -117,7 +117,7 @@ model GigPackage {
   gig               Gig         @relation(fields: [gigId], references: [id])
   tier              PackageTier
   name              String
-  description       String
+  description       String?     @db.VarChar(500)@default("")
   deliveryTime      String
   customAssetDesign Boolean     @default(false)
   sourceFile        Boolean     @default(false)
