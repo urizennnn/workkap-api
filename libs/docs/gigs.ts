@@ -68,7 +68,7 @@ export const GigsControllerSwagger = {
                 convertToHtmlCss: { type: 'boolean' },
                 revisions: { type: 'number' },
                 price: { type: 'number' },
-                TotalPrice: { type: 'number' },
+                totalPrice: { type: 'number' },
               },
             },
           },
