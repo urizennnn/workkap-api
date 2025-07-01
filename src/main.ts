@@ -21,8 +21,8 @@ async function bootstrap() {
 
   app.use(helmet());
 
-  const allowedOrigins: string[] = process.env.ALLOWED_ORIGINS
-    ? (JSON.parse(process.env.ALLOWED_ORIGINS) as string[])
+  const allowedOrigins: string[] = config.getOrThrow('ALLOWED_ORIGINS')
+    ? (JSON.parse(config.getOrThrow('ALLOWED_ORIGINS')) as string[])
     : ['http://localhost:5173'];
 
   app.enableCors({
