@@ -47,6 +47,9 @@ export const appConfigFactory = registerAs('app', () => {
       api_key: env.sendgrid_key,
       from_email: env.sendgrid_from_email,
     },
+    paystack: {
+      secret_key: env.paystack_secret_key,
+    },
   } as const;
 });
 

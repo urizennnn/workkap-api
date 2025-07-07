@@ -2,9 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 
 export const SocketDocs = {
-  controller: applyDecorators(
-    ApiTags('Sockets'),
-  ),
+  controller: applyDecorators(ApiTags('Sockets')),
 
   sendMessage: applyDecorators(
     ApiOperation({

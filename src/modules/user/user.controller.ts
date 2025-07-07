@@ -19,7 +19,7 @@ import {
   ResetPassword,
   ResetPasswordSchema,
 } from './dto';
-import { User } from '@prisma/client';
+import { User, SubscriptionPlan } from '@prisma/client';
 
 @Controller('users')
 @Docs.controller
@@ -93,6 +93,14 @@ export class UserController {
   @Docs.updateUser
   async updateUser(@Body() body: Partial<User>) {
     return this.userService.updateUserDetails(body);
+  }
+
+  @Post('subscribe')
+  @NeedsAuth()
+  @Docs.subscribe
+  async subscribe(@Req() req: Request, @Body('plan') plan: SubscriptionPlan) {
+    const { user } = req as AuthorizedRequest;
+    return this.userService.subscribe(user.email, plan);
   }
 
   @Post('switch-profile')

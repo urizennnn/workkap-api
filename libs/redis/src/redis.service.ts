@@ -53,7 +53,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return res.map((item) => JSON.parse(item));
   }
 
-  async storeOtp(userId: string, otp: string, ttl = 300, prefix = 'otp'): Promise<void> {
+  async storeOtp(
+    userId: string,
+    otp: string,
+    ttl = 300,
+    prefix = 'otp',
+  ): Promise<void> {
     await this.client.set(`${prefix}:${userId}`, otp, 'EX', ttl);
   }
 

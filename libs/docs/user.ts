@@ -71,6 +71,33 @@ export const UserControllerSwagger = {
     }),
   ),
 
+  subscribe: applyDecorators(
+    ApiOperation({ summary: 'Subscribe to a plan' }),
+    ApiOkResponse({
+      description: 'Subscription initialized',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: { type: 'object' },
+        },
+      },
+    }),
+    ApiBody({
+      required: true,
+      schema: {
+        type: 'object',
+        properties: {
+          plan: {
+            type: 'string',
+            enum: ['BASIC', 'STARTUP', 'ENTERPRISE'],
+          },
+        },
+        required: ['plan'],
+      },
+    }),
+  ),
+
   loginWithEmailAndPassword: applyDecorators(
     ApiOperation({ summary: 'Login using email and password' }),
     ApiOkResponse({

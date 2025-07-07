@@ -28,7 +28,7 @@ export const WorkspaceControllerSwagger = {
       },
     }),
   ),
-}; 
+};
 
 export const ClientControllerSwagger = {
   controller: applyDecorators(ApiTags('Client Workspace')),
