@@ -100,7 +100,7 @@ export class UserController {
   @Docs.subscribe
   async subscribe(@Req() req: Request, @Body('plan') plan: SubscriptionPlan) {
     const { user } = req as AuthorizedRequest;
-    return this.userService.subscribe(user.email, plan);
+    return this.userService.subscribe(user.userId, plan);
   }
 
   @Post('switch-profile')

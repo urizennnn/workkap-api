@@ -363,10 +363,10 @@ export class UserService {
   }
 
   async subscribe(
-    email: string,
+    id: string,
     plan: SubscriptionPlan,
   ): Promise<{ status: 'success'; data: Record<string, unknown> }> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     const amount =
       plan === SubscriptionPlan.BASIC
@@ -374,7 +374,10 @@ export class UserService {
         : plan === SubscriptionPlan.STARTUP
           ? 2900
           : 5900;
-    const tx = await this.paystack.initializeTransaction(email, amount * 100);
+    const tx = await this.paystack.initializeTransaction(
+      user.email!,
+      amount * 100,
+    );
     const nextDate = new Date();
     nextDate.setMonth(nextDate.getMonth() + 1);
     await this.prisma.user.update({

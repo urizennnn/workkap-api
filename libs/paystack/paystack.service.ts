@@ -8,7 +8,7 @@ export class PaystackService {
   private readonly baseUrl = 'https://api.paystack.co';
   private readonly secret: string;
   constructor(private readonly config: ConfigService) {
-    this.secret = pickFrom(this.config, 'paystack.secret_key', 'app');
+    this.secret = pickFrom(this.config, 'paystack.secret_key', 'app') as string;
   }
 
   async initializeTransaction(
