@@ -78,4 +78,9 @@ export class AppConfigSchema {
   @IsOptional()
   @IsString()
   sendgrid_from_email: string;
+
+  @Expose({ name: 'PAYSTACK_SECRET_KEY' })
+  @IsOptional()
+  @IsString()
+  paystack_secret_key?: string;
 }

@@ -14,7 +14,12 @@ import {
   ForgotPassword,
   ResetPassword,
 } from './dto';
-import { RegistrationMethod, User } from '@prisma/client';
+import {
+  RegistrationMethod,
+  User,
+  SubscriptionPlan,
+  SubscriptionStatus,
+} from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { comparePassword, hashPassword } from './utils';
 import {
@@ -25,6 +30,7 @@ import {
   WorkkapLogger,
   SengridService,
   RedisService,
+  PaystackService,
 } from 'libs';
 
 @Injectable()
@@ -35,6 +41,7 @@ export class UserService {
     private readonly jwtService: JWTService,
     private readonly email: SengridService,
     private readonly redis: RedisService,
+    private readonly paystack: PaystackService,
   ) {}
 
   private generateOtp(): string {
@@ -97,6 +104,16 @@ export class UserService {
       if (!user) {
         this.logger.info(`User not found with email: ${payload.email}`);
         throw new UnauthorizedException('Invalid email or password');
+      }
+      if (
+        user.nextSubscriptionDate &&
+        user.nextSubscriptionDate.getTime() < Date.now()
+      ) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { subscriptionStatus: SubscriptionStatus.STALE },
+        });
+        user.subscriptionStatus = SubscriptionStatus.STALE;
       }
 
       if (user.registrationMethod !== RegistrationMethod.COMBINATION) {
@@ -343,5 +360,31 @@ export class UserService {
     });
     await this.redis.deleteOtp(user.id, 'reset');
     return { status: 'success' };
+  }
+
+  async subscribe(
+    email: string,
+    plan: SubscriptionPlan,
+  ): Promise<{ status: 'success'; data: Record<string, unknown> }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new NotFoundException('User not found');
+    const amount =
+      plan === SubscriptionPlan.BASIC
+        ? 1900
+        : plan === SubscriptionPlan.STARTUP
+          ? 2900
+          : 5900;
+    const tx = await this.paystack.initializeTransaction(email, amount * 100);
+    const nextDate = new Date();
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        subscriptionPlan: plan,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+        nextSubscriptionDate: nextDate,
+      },
+    });
+    return { status: 'success', data: tx };
   }
 }
