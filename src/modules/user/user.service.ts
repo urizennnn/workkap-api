@@ -223,6 +223,7 @@ export class UserService {
       };
     } catch (error: unknown) {
       this.logger.error('Error logging in with Google', error);
+      console.log(error);
       if (error instanceof BadRequestException) {
         throw error;
       }

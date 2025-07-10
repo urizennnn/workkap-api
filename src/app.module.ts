@@ -18,6 +18,7 @@ import { MessageModule } from './modules/message/message.module';
 @Module({
   imports: [
     SlugModule,
+
     ConfigModule.forRoot({ isGlobal: true, load: [appConfigFactory] }),
     GlobalJWTModule.initAsync({
       inject: [ConfigService],
