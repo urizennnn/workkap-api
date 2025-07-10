@@ -150,6 +150,12 @@ export class GigsService {
       if (!freelancer) return [];
       return await this.prisma.gig.findMany({
         where: { userId: freelancer.id },
+        include: {
+          packages: true,
+          extras: true,
+          questions: true,
+          media: true,
+        },
       });
     } catch (error) {
       this.logger.error(`Failed to fetch gigs for user "${userId}"`, error);
@@ -161,9 +167,18 @@ export class GigsService {
     try {
       let gig = await this.prisma.gig.findUnique({
         where: { slug: identifier },
+        include: { packages: true, extras: true, questions: true, media: true },
       });
       if (!gig) {
-        gig = await this.prisma.gig.findUnique({ where: { id: identifier } });
+        gig = await this.prisma.gig.findUnique({
+          where: { id: identifier },
+          include: {
+            packages: true,
+            extras: true,
+            questions: true,
+            media: true,
+          },
+        });
       }
       if (!gig) {
         throw new NotFoundException(`Gig "${identifier}" not found`);
