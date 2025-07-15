@@ -78,6 +78,8 @@ model User {
   profilePictureUrl  String?
   username           String?            @unique
   fullName           String?
+  about              String?
+  language           String?
   isVerified        Boolean            @default(false)
   subscriptionPlan   SubscriptionPlan? @default(BASIC)
   subscriptionStatus SubscriptionStatus? @default(STALE)
@@ -87,6 +89,7 @@ model User {
   updatedAt          DateTime           @updatedAt
   Freelancer         Freelancer?
   Client             Client?
+  subscriptions      Subscription[]
 
   @@map("users")
 }
@@ -111,6 +114,19 @@ model Client {
   Order Order[]
 
   @@map("clients")
+}
+
+model Subscription {
+  id        String             @id @default(uuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  plan      SubscriptionPlan
+  status    SubscriptionStatus
+  expiry    DateTime
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@map("subscriptions")
 }
 
 model Gig {

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Req, Patch } from '@nestjs/common';
+import { Body, Controller, Post, Get, Req, Patch, Param } from '@nestjs/common';
 import { Request } from 'express';
 import { Google, Docs, NeedsAuth, ValidateSchema } from 'libs';
 import type { AuthorizedRequest, GoogleRequest } from 'libs/@types/express';
@@ -93,6 +93,18 @@ export class UserController {
   @Docs.updateUser
   async updateUser(@Body() body: Partial<User>) {
     return this.userService.updateUserDetails(body);
+  }
+
+  @Get(':id')
+  @Docs.getUserById
+  async getUser(@Param('id') id: string) {
+    return this.userService.getUserById(id);
+  }
+
+  @Patch(':id')
+  @Docs.patchUser
+  async patchUser(@Param('id') id: string, @Body() body: Partial<User>) {
+    return this.userService.patchUser(id, body);
   }
 
   @Post('subscribe')

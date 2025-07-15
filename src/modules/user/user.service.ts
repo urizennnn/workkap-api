@@ -17,6 +17,7 @@ import {
 import {
   RegistrationMethod,
   User,
+  Subscription,
   SubscriptionPlan,
   SubscriptionStatus,
 } from '@prisma/client';
@@ -301,6 +302,51 @@ export class UserService {
     }
   }
 
+  async getUserById(id: string): Promise<{
+    status: 'success';
+    data: User & { subscription?: Subscription };
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        subscriptions: {
+          where: { status: SubscriptionStatus.ACTIVE },
+          orderBy: { expiry: 'desc' },
+          take: 1,
+        },
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const { subscriptions, ...rest } = user as User & {
+      subscriptions: Subscription[];
+    };
+    const active: Subscription | null =
+      subscriptions.length > 0 ? subscriptions[0] : null;
+    return {
+      status: 'success',
+      data: { ...rest, subscription: active },
+    };
+  }
+
+  async patchUser(
+    id: string,
+    data: Partial<User>,
+  ): Promise<{ status: 'success'; data: User }> {
+    try {
+      const updated = await this.prisma.user.update({ where: { id }, data });
+      return { status: 'success', data: updated };
+    } catch (error: unknown) {
+      this.logger.error('Error updating user profile', error);
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('User not found');
+      }
+      throw new InternalServerErrorException('Failed to update user profile');
+    }
+  }
+
   async verifyEmail(payload: VerifyEmail): Promise<{ status: 'success' }> {
     const user = await this.prisma.user.findUnique({
       where: { email: payload.email },
@@ -387,6 +433,14 @@ export class UserService {
         subscriptionPlan: plan,
         subscriptionStatus: SubscriptionStatus.ACTIVE,
         nextSubscriptionDate: nextDate,
+      },
+    });
+    await this.prisma.subscription.create({
+      data: {
+        userId: user.id,
+        plan,
+        status: SubscriptionStatus.ACTIVE,
+        expiry: nextDate,
       },
     });
     return { status: 'success', data: tx };
