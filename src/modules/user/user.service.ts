@@ -302,10 +302,7 @@ export class UserService {
     }
   }
 
-  async getUserById(id: string): Promise<{
-    status: 'success';
-    data: User & { subscription?: Subscription };
-  }> {
+  async getUserById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
