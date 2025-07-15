@@ -5,6 +5,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiBody,
+  ApiParam,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -209,6 +210,8 @@ export const UserControllerSwagger = {
               fullName: { type: 'string' },
               username: { type: 'string' },
               country: { type: 'string' },
+              about: { type: 'string' },
+              language: { type: 'string' },
             },
           },
         },
@@ -233,6 +236,8 @@ export const UserControllerSwagger = {
           username: { type: 'string' },
           country: { type: 'string' },
           password: { type: 'string', format: 'password' },
+          about: { type: 'string' },
+          language: { type: 'string' },
         },
         required: ['email'],
       },
@@ -245,7 +250,61 @@ export const UserControllerSwagger = {
             fullName: 'Jane Doe',
             username: 'janedoe',
             country: 'Canada',
+            about: 'About me',
+            language: 'en',
           },
+        },
+      },
+    }),
+  ),
+
+  getUserById: applyDecorators(
+    ApiOperation({ summary: 'Get user profile by ID' }),
+    ApiOkResponse({
+      description: 'User profile',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              email: { type: 'string', format: 'email' },
+              fullName: { type: 'string' },
+              username: { type: 'string' },
+              about: { type: 'string' },
+              language: { type: 'string' },
+              subscription: {
+                type: 'object',
+                properties: {
+                  plan: { type: 'string' },
+                  status: { type: 'string' },
+                  expiry: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiParam({ name: 'id', description: 'User ID' }),
+  ),
+
+  patchUser: applyDecorators(
+    ApiOperation({ summary: 'Update user profile' }),
+    ApiOkResponse({
+      description: 'User profile updated',
+      schema: { type: 'object' },
+    }),
+    ApiParam({ name: 'id', description: 'User ID' }),
+    ApiBody({
+      required: true,
+      schema: {
+        type: 'object',
+        properties: {
+          about: { type: 'string' },
+          language: { type: 'string' },
         },
       },
     }),
