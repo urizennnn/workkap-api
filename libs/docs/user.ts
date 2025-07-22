@@ -413,4 +413,32 @@ export const UserControllerSwagger = {
       },
     }),
   ),
+
+  verifyToken: applyDecorators(
+    ApiOperation({ summary: 'Verify bearer token' }),
+    ApiOkResponse({
+      description: 'Token verified successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              userType: {
+                type: 'string',
+                enum: Object.values(UserType),
+              },
+              isRefreshToken: { type: 'boolean', example: false },
+            },
+          },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Invalid or expired token',
+      schema: errorSchema('Invalid or expired token'),
+    }),
+  ),
 };
