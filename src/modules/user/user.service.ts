@@ -49,6 +49,18 @@ export class UserService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
+  async verifyToken(
+    token: string,
+  ): Promise<{ status: 'success'; data: JwtPayload }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      return { status: 'success', data: payload };
+    } catch (error: unknown) {
+      this.logger.error('Failed to verify token', error);
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
   async signupWithEmailAndPassword(
     payload: SignUpWithEmailAndPassword,
   ): Promise<{ status: 'success'; data: User }> {

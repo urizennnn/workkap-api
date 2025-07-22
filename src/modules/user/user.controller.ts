@@ -1,4 +1,14 @@
-import { Body, Controller, Post, Get, Req, Patch, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Req,
+  Patch,
+  Param,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { Google, Docs, NeedsAuth, ValidateSchema } from 'libs';
 import type { AuthorizedRequest, GoogleRequest } from 'libs/@types/express';
@@ -122,5 +132,15 @@ export class UserController {
   async switchProfile(@Req() req: Request, @Body() body: SwitchProfile) {
     const { user } = req as AuthorizedRequest;
     return this.userService.switchProfile(user, body.profile);
+  }
+
+  @Get('verify-token')
+  @Docs.verifyToken
+  async verifyToken(@Headers('authorization') auth?: string) {
+    if (!auth) throw new UnauthorizedException('Missing authorization header');
+    const [type, token] = auth.split(' ');
+    if (type !== 'Bearer' || !token)
+      throw new UnauthorizedException('Invalid authorization header');
+    return this.userService.verifyToken(token);
   }
 }
