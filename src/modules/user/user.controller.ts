@@ -105,18 +105,6 @@ export class UserController {
     return this.userService.updateUserDetails(body);
   }
 
-  @Get(':id')
-  @Docs.getUserById
-  async getUser(@Param('id') id: string) {
-    return this.userService.getUserById(id);
-  }
-
-  @Patch(':id')
-  @Docs.patchUser
-  async patchUser(@Param('id') id: string, @Body() body: Partial<User>) {
-    return this.userService.patchUser(id, body);
-  }
-
   @Post('subscribe')
   @NeedsAuth()
   @Docs.subscribe
@@ -142,5 +130,17 @@ export class UserController {
     if (type !== 'Bearer' || !token)
       throw new UnauthorizedException('Invalid authorization header');
     return this.userService.verifyToken(token);
+  }
+
+  @Get(':id')
+  @Docs.getUserById
+  async getUser(@Param('id') id: string) {
+    return this.userService.getUserById(id);
+  }
+
+  @Patch(':id')
+  @Docs.patchUser
+  async patchUser(@Param('id') id: string, @Body() body: Partial<User>) {
+    return this.userService.patchUser(id, body);
   }
 }
