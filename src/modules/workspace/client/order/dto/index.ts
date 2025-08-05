@@ -15,6 +15,8 @@ export const CreateOrderSchema = v.object({
     }),
   }),
   note: v.optional(v.string()),
+  jobBrief: v.optional(v.string()),
+  keyResponsibilities: v.optional(v.array(v.string())),
   total: v.optional(v.number()),
   payment: v.pipe(
     v.string(),

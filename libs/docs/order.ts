@@ -64,6 +64,11 @@ export const OrderControllerSwagger = {
               },
             },
           },
+          jobBrief: { type: 'string' },
+          keyResponsibilities: {
+            type: 'array',
+            items: { type: 'string' },
+          },
           payment: {
             type: 'string',
             enum: Object.keys(PaymentMethod),

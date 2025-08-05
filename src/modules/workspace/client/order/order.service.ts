@@ -35,6 +35,8 @@ export class OrderService {
           gig: { connect: { id: orderData.gigId } },
           client: { connect: { id: client.id } },
           note: orderData.note ? orderData.note : null,
+          jobBrief: orderData.jobBrief ?? null,
+          keyResponsibilities: orderData.keyResponsibilities ?? [],
           total: orderData.total,
           modeOfWorking: {
             create: {

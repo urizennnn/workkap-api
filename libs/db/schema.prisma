@@ -204,6 +204,8 @@ model Order {
   freelancer      Freelancer     @relation(fields: [freelancerId], references: [id])
   payment         PaymentMethod
   note            String?        @db.VarChar(500)
+  jobBrief        String?        @db.VarChar(500)
+  keyResponsibilities String[]   @default([])
   status          OrderStatus    @default(ACTIVE)
   total           Int            @default(1)
   modeOfWorkingId String?        @unique

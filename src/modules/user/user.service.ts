@@ -271,7 +271,11 @@ export class UserService {
       }
     }
 
-    const payload: JwtPayload = { userId: user.userId, userType: profile };
+    user.userType = profile;
+    const payload: JwtPayload = {
+      userId: user.userId,
+      userType: user.userType,
+    };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.signRefreshToken(payload);
     return { status: 'success', data: { accessToken, refreshToken } };
