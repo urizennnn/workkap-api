@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { GigsService } from './gigs.service';
-import { NeedsFreelancerAuth, GigsDocs } from 'libs';
-import type { AuthorizedRequest } from 'libs/@types/express';
+import { NeedsFreelancerAuth, GigsDocs } from 'src/libs';
+import type { AuthorizedRequest } from 'src/libs/@types/express';
 import { GigSchemaType } from './dto';
 
 @Controller()

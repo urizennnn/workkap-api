@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientModule } from './client/client.module';
 import { FreelancerModule } from './freelancer/freelancer.module';
 import { WorkspaceController } from './workspace.controller';
-import { RegisterModule } from 'libs';
+import { RegisterModule } from 'src/libs';
 
 @Module({
   imports: [

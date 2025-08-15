@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { UserType } from 'libs/auth';
+import { UserType } from 'src/libs/auth';
 
 export const SignUpWithEmailAndPasswordSchema = v.object({
   email: v.pipe(v.string(), v.email()),

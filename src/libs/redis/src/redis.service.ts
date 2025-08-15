@@ -1,8 +1,8 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
-import { WorkkapLogger } from 'libs/common/logger';
+import { WorkkapLogger } from 'src/libs/common/logger';
 import { ConfigService } from '@nestjs/config';
-import { pickFrom } from 'libs/config';
+import { pickFrom } from 'src/libs/config';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {

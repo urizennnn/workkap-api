@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { FreelancerService } from './freelancer.service';
-import { FreelancerWorkspaceDocs } from 'libs';
+import { FreelancerWorkspaceDocs } from 'src/libs';
 
 @Controller()
 @FreelancerWorkspaceDocs.controller

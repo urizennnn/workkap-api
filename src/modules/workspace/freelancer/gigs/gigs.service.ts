@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PrismaService, SlugService, WorkkapLogger } from 'libs';
+import { PrismaService, SlugService, WorkkapLogger } from 'src/libs';
 import { GigSchemaType } from './dto';
 
 @Injectable()

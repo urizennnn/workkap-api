@@ -7,7 +7,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JWTService } from 'libs';
+import { JWTService } from 'src/libs';
 
 interface GatewaySocket extends Socket {
   data: {

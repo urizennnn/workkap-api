@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
-import { JWTService } from 'libs';
+import { JWTService } from 'src/libs';
 import { MessageModule } from '../../../message/message.module';
 
 @Module({

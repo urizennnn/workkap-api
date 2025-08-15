@@ -1,5 +1,5 @@
 import { Controller, Post } from '@nestjs/common';
-import { SocketDocs } from 'libs';
+import { SocketDocs } from 'src/libs';
 
 @Controller('socket')
 @SocketDocs.controller

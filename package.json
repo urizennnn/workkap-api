@@ -6,19 +6,19 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && cp -r src/libs/email/templates/*.html dist/libs/email/templates/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "NODE_OPTIONS=--max-old-space-size=4096 nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "yarn prisma:generate;yarn prisma:migrate ;node dist/src/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "prisma:generate": "prisma generate  ",
     "prisma:migrate": "prisma migrate dev ",
-    "prisma:studio": "prisma studio --schema ./libs/db/prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema ./src/libs/db/schema.prisma",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
@@ -88,7 +88,7 @@
     "typescript-eslint": "^8.20.0"
   },
   "prisma": {
-    "schema": "libs/db/schema.prisma"
+    "schema": "src/libs/db/schema.prisma"
   },
   "jest": {
     "moduleFileExtensions": [

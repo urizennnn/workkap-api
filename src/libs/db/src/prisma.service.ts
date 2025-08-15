@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { WorkkapLogger } from 'libs/common/logger/logger';
+import { WorkkapLogger } from 'src/libs/common/logger/logger';
 
 const MAX_RETRIES = 5;
 

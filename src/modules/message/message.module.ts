@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { MessageGateway } from './message.gateway';
 import { SocketController } from './socket.controller';
-import { JWTService } from 'libs';
+import { JWTService } from 'src/libs';
 
 @Module({
   imports: [],

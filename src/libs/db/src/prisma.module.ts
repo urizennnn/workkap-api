@@ -1,6 +1,6 @@
 import { DynamicModule, Module, Global, Provider, Type } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import { WorkkapLogger } from 'libs/common/logger';
+import { WorkkapLogger } from 'src/libs/common/logger';
 export const DATABASE_URL = Symbol('DATABASE_URL');
 
 export interface PrismaModuleOptions {

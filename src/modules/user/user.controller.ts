@@ -10,8 +10,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { Google, Docs, NeedsAuth, ValidateSchema } from 'libs';
-import type { AuthorizedRequest, GoogleRequest } from 'libs/@types/express';
+import { Google, Docs, NeedsAuth, ValidateSchema } from 'src/libs';
+import type { AuthorizedRequest, GoogleRequest } from 'src/libs/@types/express';
 import { UserService } from './user.service';
 import {
   LoginWithEmailAndPassword,

@@ -2,16 +2,16 @@ import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { appConfigFactory, pickFrom } from 'libs/config';
+import { appConfigFactory, pickFrom } from 'src/libs/config';
 import { UserModule } from './modules/user/user.module';
-import { GlobalJWTModule } from 'libs/auth/jwt/jwt.module';
+import { GlobalJWTModule } from 'src/libs/auth/jwt/jwt.module';
 import {
   LoggerModule,
   PrismaModule,
   SlugModule,
   WorkkapMiddlewareLogger,
   RedisModule,
-} from 'libs';
+} from 'src/libs';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { MessageModule } from './modules/message/message.module';
 

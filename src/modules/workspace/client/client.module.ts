@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientService } from './client.service';
 import { ClientController } from './client.controller';
 import { OrderModule } from './order/order.module';
-import { RegisterModule } from 'libs';
+import { RegisterModule } from 'src/libs';
 import { FreelancerModule } from './freelancer/freelancer.module';
 
 @Module({

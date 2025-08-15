@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ClientService } from './client.service';
-import { ClientDocs } from 'libs';
+import { ClientDocs } from 'src/libs';
 
 @Controller()
 @ClientDocs.controller
