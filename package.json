@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && cp -r libs/email/templates/*.html dist/libs/email/templates/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "NODE_OPTIONS=--max-old-space-size=4096 nest start",
     "start:dev": "nest start --watch",
