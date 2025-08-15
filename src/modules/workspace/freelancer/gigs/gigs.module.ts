@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { GigsService } from './gigs.service';
 import { GigsController } from './gigs.controller';
-import { JWTService, SlugService } from 'libs';
+import { JWTService, SlugService } from 'src/libs';
 
 @Module({
   imports: [],

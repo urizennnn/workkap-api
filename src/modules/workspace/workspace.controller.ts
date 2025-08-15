@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { WorkspaceDocs } from 'libs';
+import { WorkspaceDocs } from 'src/libs';
 
 @Controller()
 @WorkspaceDocs.controller

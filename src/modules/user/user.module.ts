@@ -7,7 +7,7 @@ import {
   EmailModule,
   RedisModule,
   PaystackModule,
-} from 'libs';
+} from 'src/libs';
 
 @Module({
   imports: [GoogleAuthModule, EmailModule, RedisModule, PaystackModule],

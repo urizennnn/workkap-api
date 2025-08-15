@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
-import { PrismaService, WorkkapLogger } from 'libs';
+import { PrismaService, WorkkapLogger } from 'src/libs';
 
 @Injectable()
 export class OrderService {

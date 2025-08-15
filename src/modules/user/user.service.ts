@@ -32,7 +32,7 @@ import {
   SengridService,
   RedisService,
   PaystackService,
-} from 'libs';
+} from 'src/libs';
 
 @Injectable()
 export class UserService {

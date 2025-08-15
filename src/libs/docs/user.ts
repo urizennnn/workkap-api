@@ -9,7 +9,7 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UserType } from 'libs/auth';
+import { UserType } from 'src/libs/auth';
 import { errorSchema } from './error-schema';
 
 export const UserControllerSwagger = {

@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import { Controller, Post, Req } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { NeedsFreelancerAuth, FreelancerOrderDocs } from 'libs';
-import type { AuthorizedRequest } from 'libs/@types/express';
+import { NeedsFreelancerAuth, FreelancerOrderDocs } from 'src/libs';
+import type { AuthorizedRequest } from 'src/libs/@types/express';
 
 @Controller()
 @FreelancerOrderDocs.controller

@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import type { JwtPayload } from 'libs/auth';
+import type { JwtPayload } from 'src/libs/auth';
 
 export interface GoogleOAuthUser {
   email?: string;

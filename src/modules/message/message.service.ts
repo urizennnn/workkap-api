@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService, WorkkapLogger, RedisService } from 'libs';
+import { PrismaService, WorkkapLogger, RedisService } from 'src/libs';
 import { Message } from '@prisma/client';
 import { SendMessageSchemaType } from './dto';
 

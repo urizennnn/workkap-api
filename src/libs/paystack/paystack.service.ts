@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { pickFrom } from 'libs/config';
+import { pickFrom } from 'src/libs/config';
 
 @Injectable()
 export class PaystackService {

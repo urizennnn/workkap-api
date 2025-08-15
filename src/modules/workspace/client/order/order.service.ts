@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderSchemaType } from './dto';
-import { PrismaService, WorkkapLogger } from 'libs';
+import { PrismaService, WorkkapLogger } from 'src/libs';
 import { MessageService } from '../../../message/message.service';
 import { Order, PaymentMethod } from '@prisma/client';
 

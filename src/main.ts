@@ -10,8 +10,8 @@ import {
   FormatResponseInterceptor,
   SecurityHeadersInterceptor,
   WorkkapLogger,
-} from 'libs';
-import { SchemaValidatorInterceptor } from 'libs/common/interceptor/schema.interceptor';
+} from 'src/libs';
+import { SchemaValidatorInterceptor } from 'src/libs/common/interceptor/schema.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

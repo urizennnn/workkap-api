@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { pickFrom } from 'libs/config';
+import { pickFrom } from 'src/libs/config';
 
 export enum UserType {
   CLIENT = 'client',
