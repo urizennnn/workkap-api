@@ -43,7 +43,7 @@ export class UserService {
     private readonly email: SengridService,
     private readonly redis: RedisService,
     private readonly paystack: PaystackService,
-  ) {}
+  ) { }
 
   private generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();

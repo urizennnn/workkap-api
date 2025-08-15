@@ -34,7 +34,7 @@ import { User, SubscriptionPlan } from '@prisma/client';
 @Controller('users')
 @Docs.controller
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Docs.signupWithEmailAndPassword
   @Post('signup/combination')
