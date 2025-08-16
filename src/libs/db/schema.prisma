@@ -98,6 +98,10 @@ model Freelancer {
   id    String  @id @default(uuid())
   uid   String  @unique
   user  User    @relation(fields: [uid], references: [id])
+  rating Float   @default(0)
+  skills String[] @default([])
+  certifications String[] @default([])
+  education String[] @default([])
   gigs  Gig[]
   Order Order[]
   jobsCompleted Int      @default(0)

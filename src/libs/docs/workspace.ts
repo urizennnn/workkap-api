@@ -74,6 +74,48 @@ export const FreelancerWorkspaceControllerSwagger = {
       },
     }),
   ),
+  updateProfile: applyDecorators(
+    ApiOperation({ summary: "Update a freelancer's profile" }),
+    ApiOkResponse({
+      description: 'Profile updated successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'object' },
+        },
+      },
+    }),
+  ),
+  getFreelancer: applyDecorators(
+    ApiOperation({ summary: 'Get a freelancer by id' }),
+    ApiOkResponse({
+      description: 'Freelancer object',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'object' },
+        },
+      },
+    }),
+  ),
+  getFreelancers: applyDecorators(
+    ApiOperation({ summary: 'Get all freelancers' }),
+    ApiOkResponse({
+      description: 'A list of all the freelancers',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'array', items: { type: 'object' } },
+        },
+      },
+    }),
+  ),
 };
 
 export const FreelancerOrdersControllerSwagger = {

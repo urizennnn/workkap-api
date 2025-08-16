@@ -4,12 +4,14 @@ import { FreelancerController } from './freelancer.controller';
 import { GigsModule } from './gigs/gigs.module';
 import { RegisterModule } from 'src/libs';
 import { OrderModule } from './order/order.module';
+import { PrismaModule } from 'src/libs/db/src';
 
 @Module({
   imports: [
     GigsModule,
     OrderModule,
     RegisterModule('workspace/freelancer', [GigsModule, OrderModule]),
+    PrismaModule,
   ],
   providers: [FreelancerService],
   controllers: [FreelancerController],

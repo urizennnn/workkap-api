@@ -10,7 +10,7 @@ export class OrderService {
     private readonly prisma: PrismaService,
     private readonly logger: WorkkapLogger,
     private readonly messageService: MessageService,
-  ) { }
+  ) {}
 
   async createOrder(
     orderData: CreateOrderSchemaType,
