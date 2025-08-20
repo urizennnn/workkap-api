@@ -9,14 +9,17 @@ import {
 } from '@nestjs/common';
 import { FreelancerService } from './freelancer.service';
 import { FreelancerWorkspaceDocs } from 'src/libs';
-import { UpdateFreelancerProfileDto, UpdateFreelancerProfileSchema } from './dto/update-freelancer-profile.dto';
+import {
+  UpdateFreelancerProfileDto,
+  UpdateFreelancerProfileSchema,
+} from './dto/update-freelancer-profile.dto';
 import { ValidateSchema } from 'src/libs/common/decorators';
 import { Freelancer, User } from '@prisma/client';
 
 @Controller()
 @FreelancerWorkspaceDocs.controller
 export class FreelancerController {
-  constructor(private readonly freelancerService: FreelancerService) { }
+  constructor(private readonly freelancerService: FreelancerService) {}
 
   @Get()
   @FreelancerWorkspaceDocs.getData
@@ -37,7 +40,7 @@ export class FreelancerController {
 
   @Get('all')
   @FreelancerWorkspaceDocs.getFreelancers
-  async getFreelancers(): Promise<(Freelancer & { user: User })[]> {
+  async getFreelancers() {
     return await this.freelancerService.getFreelancers();
   }
 
