@@ -35,9 +35,13 @@ export class FreelancerService {
           },
         });
       }
-      return this.prismaService.freelancer.findMany({
+      const freelancersWithGigId = await this.prismaService.freelancer.findMany({
         include: { gigs: true },
       });
+      return freelancersWithGigId.map((freelancer) => ({
+        ...freelancer,
+        gigId: freelancer.gigs.length > 0 ? freelancer.gigs[0].id : null,
+      }));
     } catch (error) {
       console.error('Error fetching freelancers:', error);
       throw new Error('Could not fetch freelancers');
