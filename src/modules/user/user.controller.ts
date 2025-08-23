@@ -28,6 +28,8 @@ import {
   ForgotPasswordSchema,
   ResetPassword,
   ResetPasswordSchema,
+  RefreshToken,
+  RefreshTokenSchema,
 } from './dto';
 import { User, SubscriptionPlan } from '@prisma/client';
 
@@ -142,5 +144,12 @@ export class UserController {
   @Docs.patchUser
   async patchUser(@Param('id') id: string, @Body() body: Partial<User>) {
     return this.userService.patchUser(id, body);
+  }
+
+  @Post('refresh-token')
+  @ValidateSchema({ body: RefreshTokenSchema })
+  @Docs.refreshToken
+  async refreshToken(@Body() body: RefreshToken) {
+    return this.userService.refreshAccessToken(body.refreshToken);
   }
 }

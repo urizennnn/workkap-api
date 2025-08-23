@@ -48,3 +48,9 @@ export const ResetPasswordSchema = v.object({
   newPassword: v.pipe(v.string(), v.minLength(6)),
 });
 export type ResetPassword = v.InferInput<typeof ResetPasswordSchema>;
+
+export const RefreshTokenSchema = v.object({
+  refreshToken: v.pipe(v.string(), v.minLength(1)),
+});
+
+export type RefreshToken = v.InferInput<typeof RefreshTokenSchema>;

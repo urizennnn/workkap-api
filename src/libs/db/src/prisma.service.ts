@@ -7,8 +7,7 @@ const MAX_RETRIES = 5;
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly logger: WorkkapLogger) {
     super();
   }

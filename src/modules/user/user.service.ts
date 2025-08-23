@@ -458,4 +458,33 @@ export class UserService {
     });
     return { status: 'success', data: tx };
   }
+
+  async refreshAccessToken(refreshToken: string): Promise<{
+    status: 'success';
+    data: { accessToken: string; refreshToken: string };
+  }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      if (!payload.isRefreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const newAccessToken = this.jwtService.sign({
+        userId: payload.userId,
+        userType: payload.userType,
+      });
+      const newRefreshToken = this.jwtService.signRefreshToken({
+        userId: payload.userId,
+        userType: payload.userType,
+      });
+
+      return {
+        status: 'success',
+        data: { accessToken: newAccessToken, refreshToken: newRefreshToken },
+      };
+    } catch (error: unknown) {
+      this.logger.error('Error refreshing access token', error);
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
 }

@@ -441,4 +441,39 @@ export const UserControllerSwagger = {
       schema: errorSchema('Invalid or expired token'),
     }),
   ),
+
+  refreshToken: applyDecorators(
+    ApiOperation({ summary: 'Refresh access token using refresh token' }),
+    ApiOkResponse({
+      description: 'New access token and refresh token issued',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: {
+            type: 'object',
+            properties: {
+              accessToken: { type: 'string' },
+              refreshToken: { type: 'string' },
+            },
+          },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Invalid or expired refresh token',
+      schema: errorSchema('Invalid or expired refresh token'),
+    }),
+    ApiBody({
+      description: 'Refresh token',
+      required: true,
+      schema: {
+        type: 'object',
+        properties: {
+          refreshToken: { type: 'string' },
+        },
+        required: ['refreshToken'],
+      },
+    }),
+  ),
 };
