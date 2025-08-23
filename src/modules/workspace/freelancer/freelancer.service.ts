@@ -4,13 +4,16 @@ import { UpdateFreelancerProfileDto } from './dto/update-freelancer-profile.dto'
 
 @Injectable()
 export class FreelancerService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   getFreelancerData() {
     return { message: 'freelancer workspace' };
   }
 
-  async updateProfile(userId: string, { skills, certifications, education }: UpdateFreelancerProfileDto) {
+  async updateProfile(
+    userId: string,
+    { skills, certifications, education }: UpdateFreelancerProfileDto,
+  ) {
     return await this.prisma.freelancer.update({
       where: { uid: userId },
       // data: { skills, certifications, education }, // This will be fixed after running prisma migrate

@@ -4,16 +4,22 @@ import * as v from 'valibot';
 export const CreateOrderSchema = v.object({
   freelancerId: v.string(),
   gigId: v.string(),
-  modeOfWorking: v.object({
-    hourlyRate: v.object({
-      amount: v.number(),
-      maxAmount: v.number(),
+  modeOfWorking: v.union([
+    v.object({
+      hourlyRate: v.object({
+        amount: v.number(),
+        maxAmount: v.number(),
+      }),
+      contract: v.optional(v.any()),
     }),
-    contract: v.object({
-      startDate: v.date(),
-      endDate: v.date(),
+    v.object({
+      contract: v.object({
+        startDate: v.date(),
+        endDate: v.date(),
+      }),
+      hourlyRate: v.optional(v.any()),
     }),
-  }),
+  ]),
   note: v.optional(v.string()),
   jobBrief: v.optional(v.string()),
   keyResponsibilities: v.optional(v.array(v.string())),

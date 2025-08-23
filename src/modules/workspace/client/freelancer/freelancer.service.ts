@@ -35,9 +35,11 @@ export class FreelancerService {
           },
         });
       }
-      const freelancersWithGigId = await this.prismaService.freelancer.findMany({
-        include: { gigs: true },
-      });
+      const freelancersWithGigId = await this.prismaService.freelancer.findMany(
+        {
+          include: { gigs: true },
+        },
+      );
       return freelancersWithGigId.map((freelancer) => ({
         ...freelancer,
         gigId: freelancer.gigs.length > 0 ? freelancer.gigs[0].id : null,
