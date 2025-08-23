@@ -27,16 +27,7 @@ export class FreelancerService {
 
   async getFreelancers() {
     return await this.prisma.freelancer.findMany({
-      select: {
-        id: true,
-        uid: true,
-        rating: true,
-        skills: true,
-        certifications: true,
-        education: true,
-        jobsCompleted: true,
-        level: true,
-        newSeller: true,
+      include: {
         user: {
           select: {
             id: true,
@@ -56,6 +47,8 @@ export class FreelancerService {
             updatedAt: true,
           },
         },
+        gigs: true,
+        Order: true,
       },
     });
   }
