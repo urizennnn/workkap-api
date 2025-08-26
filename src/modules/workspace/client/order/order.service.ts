@@ -40,22 +40,30 @@ export class OrderService {
           total: orderData.total,
           modeOfWorking: {
             create: {
-              ...(orderData.modeOfWorking && 'hourlyRate' in orderData.modeOfWorking && orderData.modeOfWorking.hourlyRate ? {
-                hourlyRate: {
-                  create: {
-                    amount: orderData.modeOfWorking.hourlyRate.amount,
-                    maxAmount: orderData.modeOfWorking.hourlyRate.maxAmount,
-                  },
-                },
-              } : {}),
-              ...(orderData.modeOfWorking && 'contract' in orderData.modeOfWorking && orderData.modeOfWorking.contract ? {
-                contract: {
-                  create: {
-                    startDate: orderData.modeOfWorking.contract.startDate,
-                    endDate: orderData.modeOfWorking.contract.endDate,
-                  },
-                },
-              } : {}),
+              ...(orderData.modeOfWorking &&
+              'hourlyRate' in orderData.modeOfWorking &&
+              orderData.modeOfWorking.hourlyRate
+                ? {
+                    hourlyRate: {
+                      create: {
+                        amount: orderData.modeOfWorking.hourlyRate.amount,
+                        maxAmount: orderData.modeOfWorking.hourlyRate.maxAmount,
+                      },
+                    },
+                  }
+                : {}),
+              ...(orderData.modeOfWorking &&
+              'contract' in orderData.modeOfWorking &&
+              orderData.modeOfWorking.contract
+                ? {
+                    contract: {
+                      create: {
+                        startDate: orderData.modeOfWorking.contract.startDate,
+                        endDate: orderData.modeOfWorking.contract.endDate,
+                      },
+                    },
+                  }
+                : {}),
             },
           },
           payment: orderData.payment as PaymentMethod,

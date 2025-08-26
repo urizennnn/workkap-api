@@ -6,10 +6,9 @@ import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import {
-  AllExceptionsFilter,
+  ErrorLoggingFilter,
   FormatResponseInterceptor,
   SecurityHeadersInterceptor,
-  WorkkapLogger,
 } from 'src/libs';
 import { SchemaValidatorInterceptor } from 'src/libs/common/interceptor/schema.interceptor';
 
@@ -17,7 +16,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   const config = app.get(ConfigService);
-  const logger = await app.resolve(WorkkapLogger);
 
   app.use(helmet());
 
@@ -39,7 +37,7 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new AllExceptionsFilter(logger));
+  app.useGlobalFilters(new ErrorLoggingFilter());
   app.useGlobalInterceptors(
     new FormatResponseInterceptor(),
     new SchemaValidatorInterceptor(new Reflector()),

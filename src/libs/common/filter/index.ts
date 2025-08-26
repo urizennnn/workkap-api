@@ -1,1 +1,1 @@
-export * from './all-exceptions.filter';
+export * from './error-logging.filter';
