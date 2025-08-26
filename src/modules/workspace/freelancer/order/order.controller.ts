@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Controller, Post, Req } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { NeedsFreelancerAuth, FreelancerOrderDocs } from 'src/libs';
 import type { AuthorizedRequest } from 'src/libs/@types/express';
@@ -10,7 +10,7 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @NeedsFreelancerAuth()
-  @Post('fetch')
+  @Get('fetch')
   @FreelancerOrderDocs.fetchOrders
   async fetchOrders(@Req() req: Request) {
     const user = (req.user as AuthorizedRequest).user;
