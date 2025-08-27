@@ -283,12 +283,14 @@ export class UserService {
 
   async updateUserDetails(
     payload: Partial<User>,
+    userId: string,
   ): Promise<{ status: 'success'; data: User }> {
     try {
       const user = await this.prisma.user.findUnique({
-        where: { email: payload.email! },
+        where: { id: userId },
       });
       if (!user) {
+        this.logger.error('User not found for update', payload);
         throw new NotFoundException('User not found');
       }
 
@@ -302,7 +304,7 @@ export class UserService {
       }
 
       const updatedUser = await this.prisma.user.update({
-        where: { email: payload.email! },
+        where: { id: user.id },
         data: { ...payload },
       });
       return { status: 'success', data: updatedUser };
