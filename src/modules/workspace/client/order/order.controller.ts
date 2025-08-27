@@ -6,7 +6,7 @@ import {
   JwtPayload,
   ValidateSchema,
   OrderDocs,
-  NeedsClientAuth,
+  NeedsFreelancerAuth,
 } from 'src/libs';
 
 @Controller()
@@ -16,7 +16,7 @@ export class OrderController {
 
   @OrderDocs.createOrder
   @Post('create')
-  @NeedsClientAuth()
+  @NeedsFreelancerAuth()
   @ValidateSchema({
     body: CreateOrderSchema,
   })
