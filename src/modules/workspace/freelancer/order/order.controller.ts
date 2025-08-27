@@ -13,7 +13,7 @@ export class OrderController {
   @Get('fetch')
   @FreelancerOrderDocs.fetchOrders
   async fetchOrders(@Req() req: Request) {
-    const user = (req.user as AuthorizedRequest).user;
+    const user = req.user as AuthorizedRequest['user'];
     return this.orderService.listOrders(user.userId);
   }
 }

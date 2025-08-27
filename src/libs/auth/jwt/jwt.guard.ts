@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { JWTService, UserType } from './jwt.service';
@@ -68,6 +69,7 @@ export class ClientAuth implements CanActivate {
 
 @Injectable()
 export class FreelancerAuth implements CanActivate {
+  private readonly logger = new Logger(FreelancerAuth.name);
   constructor(private readonly jwt: JWTService) {}
 
   canActivate(context: ExecutionContext): boolean {
