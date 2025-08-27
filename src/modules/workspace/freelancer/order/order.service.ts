@@ -27,7 +27,11 @@ export class OrderService {
         where: { freelancerId: freelancer.id },
         include: {
           gig: true,
-          client: true,
+          client: {
+            include: {
+              user: true,
+            },
+          },
           modeOfWorking: {
             include: {
               hourlyRate: true,
@@ -40,15 +44,21 @@ export class OrderService {
         `Found ${orders.length} orders for freelancer ID: ${freelancer.id}`,
       );
       const results = {
-        active: orders.filter((order) => order.status === OrderStatus.ACTIVE),
-        late: orders.filter((order) => order.status === OrderStatus.LATE),
-        completed: orders.filter(
-          (order) => order.status === OrderStatus.COMPLETED,
-        ),
-        pending: orders.filter((order) => order.status === OrderStatus.PENDING),
-        cancelled: orders.filter(
-          (order) => order.status === OrderStatus.CANCELLED,
-        ),
+        active: orders
+          .filter((order) => order.status === OrderStatus.ACTIVE)
+          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+        late: orders
+          .filter((order) => order.status === OrderStatus.LATE)
+          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+        completed: orders
+          .filter((order) => order.status === OrderStatus.COMPLETED)
+          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+        pending: orders
+          .filter((order) => order.status === OrderStatus.PENDING)
+          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+        cancelled: orders
+          .filter((order) => order.status === OrderStatus.CANCELLED)
+          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
       };
       return results;
     } catch (error) {

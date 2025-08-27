@@ -10,14 +10,10 @@ export class FreelancerService {
     return { message: 'freelancer workspace' };
   }
 
-  async updateProfile(
-    userId: string,
-    { skills, certifications, education }: UpdateFreelancerProfileDto,
-  ) {
+  async updateProfile(userId: string, payload: UpdateFreelancerProfileDto) {
     return await this.prisma.freelancer.update({
       where: { uid: userId },
-      // data: { skills, certifications, education }, // This will be fixed after running prisma migrate
-      data: { skills },
+      data: { ...payload },
     });
   }
 
@@ -36,7 +32,6 @@ export class FreelancerService {
             id: true,
             email: true,
             country: true,
-            profilePictureUrl: true,
             username: true,
             fullName: true,
             about: true,

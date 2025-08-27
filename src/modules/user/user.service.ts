@@ -203,7 +203,6 @@ export class UserService {
           data: {
             email: googleUser.email,
             fullName: googleUser.fullName,
-            profilePictureUrl: googleUser.profilePictureUrl,
             registrationMethod: RegistrationMethod.GOOGLE,
           },
         });

@@ -10,7 +10,12 @@ export class UpdateFreelancerProfileDto {
   @IsArray()
   @IsString({ each: true })
   skills: string[];
-
+  @ApiProperty({
+    description: 'The URL of the freelancer profile picture',
+    example: 'https://example.com/profile.jpg',
+  })
+  @IsString()
+  profilePictureUrl: string;
   @ApiProperty({
     description: 'A list of the freelancer certifications',
     example: ['AWS Certified Cloud Practitioner'],
