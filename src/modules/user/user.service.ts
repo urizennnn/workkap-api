@@ -73,6 +73,8 @@ export class UserService {
           email: payload.email,
           country: payload.country,
           password: hashedPassword,
+          //FIX: remove this when you get email service working
+          isVerified:true,
           fullName: payload.fullName,
           registrationMethod: RegistrationMethod.COMBINATION,
           username: payload.username,
