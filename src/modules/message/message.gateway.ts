@@ -66,10 +66,13 @@ export class MessageGateway implements OnGatewayConnection {
   @SubscribeMessage('read_messages')
   async handleRead(
     @ConnectedSocket() client: GatewaySocket,
-    @MessageBody() data: { name: string },
+    @MessageBody() data: { otherUserId: string },
   ) {
     const userId = client.data.userId!;
-    await this.messageService.markMessagesAsRead(data.name, userId);
+    await this.messageService.markMessagesAsReadBetweenUsers(
+      userId,
+      data.otherUserId,
+    );
     const count = await this.messageService.countUnreadMessages(userId);
     client.emit('unread_count', { count });
   }

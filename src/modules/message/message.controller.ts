@@ -9,22 +9,21 @@ import {
 import type { Request } from 'express';
 import { NeedsAuth, ValidateSchema } from 'src/libs';
 import { MessageService } from './message.service';
-import * as v from 'valibot';
+import { MessageSwaggerController } from 'src/libs/docs/message';
+import { GetConversationParamsSchema } from './dto';
 
-const GetMessagesParamsSchema = v.object({
-  name: v.pipe(v.string(), v.minLength(1, 'Conversation name is required')),
-});
-
+@MessageSwaggerController.controller
 @Controller('messages')
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
-  @Get(':name')
+  @MessageSwaggerController.getMessages
+  @Get('with/:otherUserId')
   @NeedsAuth()
-  @ValidateSchema({ params: GetMessagesParamsSchema })
+  @ValidateSchema({ params: GetConversationParamsSchema })
   getMessages(
     @Req() req: Request,
-    @Param('name') name: string,
+    @Param('otherUserId') otherUserId: string,
     @Query('page') pageQ?: string,
     @Query('limit') limitQ?: string,
     @Query('markRead') markReadQ?: string,
@@ -41,6 +40,7 @@ export class MessageController {
       const limit = limitQ
         ? Math.min(200, Math.max(1, Number(limitQ)))
         : undefined;
+
       if (
         (pageQ && Number.isNaN(Number(pageQ))) ||
         (limitQ && Number.isNaN(Number(limitQ)))
@@ -50,12 +50,12 @@ export class MessageController {
 
       const markRead = markReadQ === undefined ? true : markReadQ !== 'false';
 
-      return this.messageService.getConversationForUser(name, userId, {
-        page,
-        limit,
-        markRead,
-      });
-    } catch (err) {
+      return this.messageService.getConversationBetweenUsers(
+        userId,
+        otherUserId,
+        { page, limit, markRead },
+      );
+    } catch {
       throw new BadRequestException('Invalid request');
     }
   }

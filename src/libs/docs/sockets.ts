@@ -27,14 +27,14 @@ export const SocketDocs = {
     ApiOperation({
       summary: "Emit 'read_messages'",
       description:
-        "Marks messages in the specified conversation as read. Server responds with updated 'unread_count'.",
+        "Marks messages in the conversation with the specified user as read. Server responds with updated 'unread_count'.",
     }),
     ApiBody({
       required: true,
       schema: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
+          otherUserId: { type: 'string' },
         },
       },
     }),

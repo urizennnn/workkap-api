@@ -15,6 +15,10 @@ export class MessageService {
     private readonly redis: RedisService,
   ) {}
 
+  private conversationKey(a: string, b: string): string {
+    return [a, b].sort().join(':');
+  }
+
   async sendMessage(
     senderId: string,
     payload: SendMessageSchemaType,
@@ -29,17 +33,22 @@ export class MessageService {
           isRead: false,
         },
       });
-      await this.redis.cacheMessage(payload.name, message);
+
+      const pairKey = this.conversationKey(senderId, payload.receiverId);
+      await Promise.allSettled([
+        this.redis.cacheMessage(`pair:${pairKey}`, message),
+        this.redis.cacheMessage(`name:${payload.name}`, message),
+      ]);
+
       return message;
     } catch (error) {
       this.logger.error('Failed to send message', error);
       throw error;
     }
   }
-
   async getMessages(name: string): Promise<Message[]> {
     try {
-      const cached = await this.redis.getMessages(name);
+      const cached = await this.redis.getMessages(`name:${name}`);
       if (cached.length) return cached as Message[];
     } catch (error) {
       this.logger.error('Redis get failed', error);
@@ -50,9 +59,12 @@ export class MessageService {
     });
   }
 
-  async markMessagesAsRead(name: string, userId: string): Promise<void> {
+  async markMessagesAsReadBetweenUsers(
+    selfId: string,
+    otherId: string,
+  ): Promise<void> {
     await this.prisma.message.updateMany({
-      where: { name, receiverId: userId, isRead: false },
+      where: { receiverId: selfId, senderId: otherId, isRead: false },
       data: { isRead: true },
     });
   }
@@ -62,40 +74,23 @@ export class MessageService {
       where: { receiverId: userId, isRead: false },
     });
   }
-  async getConversationForUser(
-    name: string,
-    userId: string,
+
+  async getConversationBetweenUsers(
+    selfId: string,
+    otherId: string,
     opts?: { page?: number; limit?: number; markRead?: boolean },
   ): Promise<{ messages: Message[]; unreadCount: number }> {
     try {
-      const canView = await this.prisma.message.findFirst({
-        where: {
-          name,
-          OR: [{ senderId: userId }, { receiverId: userId }],
-        },
-        select: { id: true },
-      });
-      if (!canView) {
-        this.logger.warn(
-          'Access denied for user "%s" to conversation "%s"',
-          userId,
-          name,
-        );
-        throw new ForbiddenException('You are not part of this conversation');
-      }
-
-      const page = opts?.page;
-      const limit = opts?.limit;
-      const markRead = opts?.markRead !== false;
+      const pairKey = this.conversationKey(selfId, otherId);
 
       let messages: Message[] = [];
 
       try {
-        const cached = await this.redis.getMessages(name);
+        const cached = await this.redis.getMessages(`pair:${pairKey}`);
         if (cached?.length) {
-          if (page && limit) {
-            const start = (page - 1) * limit;
-            const end = start + limit;
+          if (opts?.page && opts?.limit) {
+            const start = (opts.page - 1) * opts.limit;
+            const end = start + opts.limit;
             messages = (cached as Message[]).slice(start, end);
           } else {
             messages = cached as Message[];
@@ -103,35 +98,100 @@ export class MessageService {
         }
       } catch (err) {
         this.logger.warn(
-          'Redis unavailable while fetching "%s": %o',
-          name,
+          'Redis unavailable while fetching pair "%s": %o',
+          pairKey,
           err,
         );
       }
+
       if (!messages.length) {
         messages = await this.prisma.message.findMany({
-          where: { name },
+          where: {
+            OR: [
+              { senderId: selfId, receiverId: otherId },
+              { senderId: otherId, receiverId: selfId },
+            ],
+          },
           orderBy: { createdAt: 'asc' },
-          ...(page && limit ? { skip: (page - 1) * limit, take: limit } : {}),
+          ...(opts?.page && opts?.limit
+            ? { skip: (opts.page - 1) * opts.limit, take: opts.limit }
+            : {}),
         });
       }
 
-      if (markRead) {
-        await this.markMessagesAsRead(name, userId);
+      if (messages.length === 0) {
+        return {
+          messages: [],
+          unreadCount: await this.countUnreadMessages(selfId),
+        };
       }
 
-      const unreadCount = await this.countUnreadMessages(userId);
+      if (opts?.markRead !== false) {
+        await this.markMessagesAsReadBetweenUsers(selfId, otherId);
+      }
+
+      const unreadCount = await this.countUnreadMessages(selfId);
 
       return { messages, unreadCount };
     } catch (error) {
       if (error instanceof ForbiddenException) throw error;
       this.logger.error(
-        'Failed to fetch conversation "%s" for user "%s"',
-        name,
-        userId,
+        'Failed to fetch conversation for "%s" <-> "%s"',
+        selfId,
+        otherId,
         error,
       );
       throw new InternalServerErrorException('Unable to fetch messages');
     }
+  }
+
+  async getConversationForUser(
+    name: string,
+    userId: string,
+    opts?: { page?: number; limit?: number; markRead?: boolean },
+  ): Promise<{ messages: Message[]; unreadCount: number }> {
+    const recent = await this.prisma.message.findFirst({
+      where: { name, OR: [{ senderId: userId }, { receiverId: userId }] },
+      orderBy: { createdAt: 'desc' },
+      select: { senderId: true, receiverId: true },
+    });
+    if (recent) {
+      const otherId =
+        recent.senderId === userId ? recent.receiverId : recent.senderId;
+      return this.getConversationBetweenUsers(userId, otherId, opts);
+    }
+    const page = opts?.page;
+    const limit = opts?.limit;
+
+    let messages: Message[] = [];
+    try {
+      const cached = await this.redis.getMessages(`name:${name}`);
+      if (cached?.length) {
+        if (page && limit) {
+          const start = (page - 1) * limit;
+          const end = start + limit;
+          messages = (cached as Message[]).slice(start, end);
+        } else {
+          messages = cached as Message[];
+        }
+      }
+    } catch (err) {
+      this.logger.warn('Redis unavailable while fetching "%s": %o', name, err);
+    }
+    if (!messages.length) {
+      messages = await this.prisma.message.findMany({
+        where: { name },
+        orderBy: { createdAt: 'asc' },
+        ...(page && limit ? { skip: (page - 1) * limit, take: limit } : {}),
+      });
+    }
+    if (opts?.markRead !== false) {
+      await this.prisma.message.updateMany({
+        where: { name, receiverId: userId, isRead: false },
+        data: { isRead: true },
+      });
+    }
+    const unreadCount = await this.countUnreadMessages(userId);
+    return { messages, unreadCount };
   }
 }

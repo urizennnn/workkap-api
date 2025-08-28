@@ -6,4 +6,8 @@ export const SendMessageSchema = v.object({
   content: v.string(),
 });
 
+export const GetConversationParamsSchema = v.object({
+  otherUserId: v.pipe(v.string(), v.minLength(1, 'otherUserId is required')),
+});
+
 export type SendMessageSchemaType = v.InferInput<typeof SendMessageSchema>;
