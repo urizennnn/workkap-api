@@ -8,14 +8,14 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JWTService } from 'src/libs';
+import { MessageService } from './message.service';
+import { SendMessageSchemaType } from './dto';
 
 interface GatewaySocket extends Socket {
   data: {
     userId?: string;
   };
 }
-import { MessageService } from './message.service';
-import { SendMessageSchemaType } from './dto';
 
 @WebSocketGateway({ cors: true })
 export class MessageGateway implements OnGatewayConnection {
@@ -55,23 +55,23 @@ export class MessageGateway implements OnGatewayConnection {
   ) {
     const senderId = client.data.userId!;
     const message = await this.messageService.sendMessage(senderId, body);
-    this.server.to(body.receiverId).emit('new_message', message);
+    this.server.to(message.receiverId).emit('new_message', message);
     client.emit('new_message', message);
     const count = await this.messageService.countUnreadMessages(
-      body.receiverId,
+      message.receiverId,
     );
-    this.server.to(body.receiverId).emit('unread_count', { count });
+    this.server.to(message.receiverId).emit('unread_count', { count });
   }
 
   @SubscribeMessage('read_messages')
   async handleRead(
     @ConnectedSocket() client: GatewaySocket,
-    @MessageBody() data: { otherUserId: string },
+    @MessageBody() data: { conversationId: string },
   ) {
     const userId = client.data.userId!;
-    await this.messageService.markMessagesAsReadBetweenUsers(
+    await this.messageService.markMessagesAsReadForConversation(
+      data.conversationId,
       userId,
-      data.otherUserId,
     );
     const count = await this.messageService.countUnreadMessages(userId);
     client.emit('unread_count', { count });

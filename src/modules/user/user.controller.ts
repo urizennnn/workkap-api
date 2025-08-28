@@ -30,6 +30,8 @@ import {
   ResetPasswordSchema,
   RefreshToken,
   RefreshTokenSchema,
+  UpdateUser,
+  UpdateUserSchema,
 } from './dto';
 import { User, SubscriptionPlan } from '@prisma/client';
 
@@ -103,11 +105,11 @@ export class UserController {
   @Patch('update')
   @NeedsAuth()
   @Docs.updateUser
-  async updateUser(@Body() body: Partial<User>, @Req() req: Request) {
+  @ValidateSchema({ body: UpdateUserSchema })
+  async updateUser(@Body() body: UpdateUser, @Req() req: Request) {
     const user = req.user as AuthorizedRequest['user'];
     return this.userService.updateUserDetails(body, user.userId);
   }
-
   @Post('subscribe')
   @NeedsAuth()
   @Docs.subscribe

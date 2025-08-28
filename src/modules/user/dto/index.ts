@@ -52,5 +52,15 @@ export type ResetPassword = v.InferInput<typeof ResetPasswordSchema>;
 export const RefreshTokenSchema = v.object({
   refreshToken: v.pipe(v.string(), v.minLength(1)),
 });
-
 export type RefreshToken = v.InferInput<typeof RefreshTokenSchema>;
+
+export const UpdateUserSchema = v.object({
+  email: v.optional(v.pipe(v.string(), v.email())),
+  fullName: v.optional(v.pipe(v.string(), v.minLength(1))),
+  username: v.optional(v.pipe(v.string(), v.minLength(1))),
+  country: v.optional(v.pipe(v.string(), v.minLength(1))),
+  password: v.optional(v.pipe(v.string(), v.minLength(6))),
+  about: v.optional(v.string()),
+  language: v.optional(v.string()),
+});
+export type UpdateUser = v.InferInput<typeof UpdateUserSchema>;

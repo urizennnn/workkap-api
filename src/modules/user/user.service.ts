@@ -13,6 +13,7 @@ import {
   ResendOtp,
   ForgotPassword,
   ResetPassword,
+  UpdateUser,
 } from './dto';
 import {
   RegistrationMethod,
@@ -281,15 +282,13 @@ export class UserService {
   }
 
   async updateUserDetails(
-    payload: Partial<User>,
+    payload: UpdateUser,
     userId: string,
   ): Promise<{ status: 'success'; data: User }> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-      });
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
       if (!user) {
-        this.logger.error('User not found for update', payload);
+        this.logger.error('User not found for update: %s', userId);
         throw new NotFoundException('User not found');
       }
 
@@ -302,23 +301,44 @@ export class UserService {
         );
       }
 
+      const data: Record<string, unknown> = {};
+      if (payload.email !== undefined) data.email = payload.email;
+      if (payload.fullName !== undefined) data.fullName = payload.fullName;
+      if (payload.username !== undefined) data.username = payload.username;
+      if (payload.country !== undefined) data.country = payload.country;
+      if (payload.about !== undefined) data.about = payload.about;
+      if (payload.language !== undefined) data.language = payload.language;
+
+      if (payload.password) {
+        data.password = await hashPassword(payload.password);
+      }
+
       const updatedUser = await this.prisma.user.update({
         where: { id: user.id },
-        data: { ...payload },
+        data,
       });
+
       return { status: 'success', data: updatedUser };
     } catch (error: unknown) {
       this.logger.error('Error updating user details', error);
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Email or username already exists');
+        }
+        if (error.code === 'P2025') {
+          throw new NotFoundException('User not found');
+        }
+      }
       if (
         error instanceof NotFoundException ||
-        error instanceof BadRequestException
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
       ) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to update user details');
     }
   }
-
   async getUserById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },

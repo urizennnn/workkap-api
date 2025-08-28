@@ -250,15 +250,29 @@ model Contract {
   @@map("contracts")
 }
 
+model Conversation {
+  id        String    @id @default(uuid())
+  aId       String
+  bId       String
+  topic     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+
+  @@unique([aId, bId], name: "pair_unique")
+  @@map("conversations")
+}
+
 model Message {
-  name       String
-  id         String   @id @default(uuid())
-  senderId   String
-  receiverId String
-  content    String   @db.VarChar(1000)
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  receiverId     String
+  content        String       @db.VarChar(1000)
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@map("messages")
 }

@@ -8,17 +8,17 @@ export const SocketDocs = {
     ApiOperation({
       summary: "Emit 'send_message'",
       description:
-        "Sends a chat message. The server emits 'new_message' to both users and updates 'unread_count' for the receiver.",
+        "Sends a chat message to an existing conversation. The server emits 'new_message' to both participants and updates 'unread_count' for the receiver.",
     }),
     ApiBody({
       required: true,
       schema: {
         type: 'object',
         properties: {
-          receiverId: { type: 'string' },
-          name: { type: 'string' },
+          conversationId: { type: 'string' },
           content: { type: 'string' },
         },
+        required: ['conversationId', 'content'],
       },
     }),
   ),
@@ -27,15 +27,16 @@ export const SocketDocs = {
     ApiOperation({
       summary: "Emit 'read_messages'",
       description:
-        "Marks messages in the conversation with the specified user as read. Server responds with updated 'unread_count'.",
+        "Marks messages in the specified conversation as read for the authenticated user. Server responds with updated 'unread_count'.",
     }),
     ApiBody({
       required: true,
       schema: {
         type: 'object',
         properties: {
-          otherUserId: { type: 'string' },
+          conversationId: { type: 'string' },
         },
+        required: ['conversationId'],
       },
     }),
   ),

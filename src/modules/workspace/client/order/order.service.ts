@@ -71,11 +71,11 @@ export class OrderService {
       });
 
       if (gig && freelancer) {
-        await this.messageService.sendMessage(userId, {
-          name: gig.title,
-          receiverId: freelancer.uid,
-          content: 'Order created',
-        });
+        await this.messageService.getOrCreateConversation(
+          userId,
+          freelancer.uid,
+          gig.title,
+        );
       }
       return order;
     } catch (error) {
