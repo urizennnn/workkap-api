@@ -1,10 +1,10 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Param,
   Query,
   Req,
-  BadRequestException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { NeedsAuth, ValidateSchema } from 'src/libs';
@@ -58,5 +58,19 @@ export class MessageController {
     } catch {
       throw new BadRequestException('Invalid request');
     }
+  }
+
+  @MessageSwaggerController.getConversations
+  @Get('conversations')
+  @NeedsAuth()
+  async getConversations(@Req() req: Request) {
+    const userId =
+      req.user && typeof req.user === 'object'
+        ? ((req.user as any).userId ?? (req.user as any).sub)
+        : undefined;
+
+    if (!userId) throw new BadRequestException('Unable to resolve user id');
+
+    return this.messageService.listUserConversations(userId);
   }
 }

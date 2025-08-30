@@ -186,4 +186,108 @@ export class MessageService {
       where: { receiverId: userId, isRead: false },
     });
   }
+
+  async listUserConversations(userId: string): Promise<{
+    conversations: Array<{
+      id: string;
+      topic: string | null;
+      participants: { selfId: string; otherId: string };
+      otherUser: {
+        id: string;
+        email: string | null;
+        fullName: string | null;
+        username: string | null;
+      };
+      lastMessage: Message | null;
+      unreadCount: number;
+      lastActivityAt: Date;
+    }>;
+    totalUnreadCount: number;
+  }> {
+    try {
+      const conversations = await this.prisma.conversation.findMany({
+        where: { OR: [{ aId: userId }, { bId: userId }] },
+      });
+
+      if (!conversations.length)
+        return { conversations: [], totalUnreadCount: 0 };
+
+      const conversationIds = conversations.map((c) => c.id);
+      const otherUserIds = Array.from(
+        new Set(conversations.map((c) => (c.aId === userId ? c.bId : c.aId))),
+      );
+
+      const unreadGrouped = await this.prisma.message.groupBy({
+        by: ['conversationId'],
+        where: {
+          receiverId: userId,
+          isRead: false,
+          conversationId: { in: conversationIds },
+        },
+        _count: { _all: true },
+      });
+      const unreadMap = new Map<string, number>(
+        unreadGrouped.map((g) => [g.conversationId, g._count._all]),
+      );
+
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: otherUserIds } },
+        select: { id: true, email: true, fullName: true, username: true },
+      });
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      const latestMessages = await this.prisma.message.findMany({
+        where: { conversationId: { in: conversationIds } },
+        orderBy: { createdAt: 'desc' },
+      });
+      const lastByConv = new Map<string, Message>();
+      for (const m of latestMessages) {
+        if (!lastByConv.has(m.conversationId))
+          lastByConv.set(m.conversationId, m);
+      }
+
+      const items = conversations
+        .map((c) => {
+          const otherId = c.aId === userId ? c.bId : c.aId;
+          const otherUser =
+            userMap.get(otherId) ??
+            ({
+              id: otherId,
+              email: null,
+              fullName: null,
+              username: null,
+            } as const);
+          const lastMessage = lastByConv.get(c.id) ?? null;
+          const unreadCount = unreadMap.get(c.id) ?? 0;
+          const lastActivityAt =
+            lastMessage?.createdAt ?? c.updatedAt ?? c.createdAt;
+          return {
+            id: c.id,
+            topic: c.topic ?? null,
+            participants: { selfId: userId, otherId },
+            otherUser,
+            lastMessage,
+            unreadCount,
+            lastActivityAt,
+          };
+        })
+        .sort(
+          (a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime(),
+        );
+
+      const totalUnreadCount = unreadGrouped.reduce(
+        (sum, g) => sum + g._count._all,
+        0,
+      );
+
+      return { conversations: items, totalUnreadCount };
+    } catch (error) {
+      this.logger.error(
+        'Failed to list user conversations for "%s"',
+        userId,
+        error,
+      );
+      throw new InternalServerErrorException('Unable to list conversations');
+    }
+  }
 }
