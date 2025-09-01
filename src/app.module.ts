@@ -24,6 +24,7 @@ import { MessageModule } from './modules/message/message.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: pickFrom(config, 'jwt.secret', 'app'),
+        expireIn: pickFrom(config, 'jwt.expires_in', 'app'),
       }),
     }),
     LoggerModule,

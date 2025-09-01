@@ -10,6 +10,7 @@ import { JWTService, UserType } from './jwt.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
+  private readonly logger = new Logger(JwtGuard.name);
   constructor(private readonly jwt: JWTService) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -30,7 +31,8 @@ export class JwtGuard implements CanActivate {
       }
       request.user = payload;
       return true;
-    } catch {
+    } catch (err) {
+      this.logger.error(`Invalid token: ${err.message}`, err.stack);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
