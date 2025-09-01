@@ -13,39 +13,48 @@ import {
   UpdateFreelancerProfileDto,
   UpdateFreelancerProfileSchema,
 } from './dto/update-freelancer-profile.dto';
-import { ValidateSchema } from 'src/libs/common/decorators';
+import {
+  NeedsFreelancerAuth,
+  ValidateSchema,
+} from 'src/libs/common/decorators';
 import { Freelancer, User } from '@prisma/client';
+import { AuthorizedRequest } from 'src/libs/@types/express';
 
 @Controller()
 @FreelancerWorkspaceDocs.controller
 export class FreelancerController {
   constructor(private readonly freelancerService: FreelancerService) {}
 
-  @Get()
   @FreelancerWorkspaceDocs.getData
+  @NeedsFreelancerAuth()
+  @Get()
   getData() {
     return this.freelancerService.getFreelancerData();
   }
 
-  @Put('profile')
-  @ValidateSchema({ body: UpdateFreelancerProfileSchema })
   @FreelancerWorkspaceDocs.updateProfile
+  @Put('profile')
+  @NeedsFreelancerAuth()
+  @ValidateSchema({ body: UpdateFreelancerProfileSchema })
   async updateProfile(
     @Req() req: any,
     @Body() body: UpdateFreelancerProfileDto,
   ): Promise<Freelancer> {
-    const userId = req.user.sub;
+    const userId = (req as AuthorizedRequest).user.userId;
+
     return await this.freelancerService.updateProfile(userId, body);
   }
 
-  @Get('all')
   @FreelancerWorkspaceDocs.getFreelancers
+  @NeedsFreelancerAuth()
+  @Get('all')
   async getFreelancers() {
     return await this.freelancerService.getFreelancers();
   }
 
-  @Get(':userId')
   @FreelancerWorkspaceDocs.getFreelancer
+  @NeedsFreelancerAuth()
+  @Get(':userId')
   async getFreelancer(
     @Param('userId', new ParseUUIDPipe()) userId: string,
   ): Promise<(Freelancer & { user: User }) | null> {

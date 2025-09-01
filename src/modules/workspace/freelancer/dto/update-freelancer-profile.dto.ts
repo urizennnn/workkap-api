@@ -35,6 +35,7 @@ export class UpdateFreelancerProfileDto {
 
 export const UpdateFreelancerProfileSchema = v.object({
   skills: v.array(v.string()),
+  profilePictureUrl: v.string(),
   certifications: v.array(v.string()),
   education: v.array(v.string()),
 });
