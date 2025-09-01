@@ -161,7 +161,7 @@ model Gig {
 model GigPackage {
   id                String      @id @default(uuid())
   gigId             String
-  gig               Gig         @relation(fields: [gigId], references: [id])
+  gig               Gig         @relation(fields: [gigId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   tier              PackageTier
   name              String
   description       String?     @default("") @db.VarChar(500)
@@ -178,7 +178,7 @@ model GigPackage {
 model ExtraService {
   id           String  @id @default(uuid())
   gigId        String
-  gig          Gig     @relation(fields: [gigId], references: [id])
+  gig          Gig     @relation(fields: [gigId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name         String
   deliveryTime String
   price        Decimal @db.Decimal(10, 2)
@@ -187,14 +187,14 @@ model ExtraService {
 model Question {
   id    String @id @default(uuid())
   gigId String
-  gig   Gig    @relation(fields: [gigId], references: [id])
+  gig   Gig    @relation(fields: [gigId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   text  String
 }
 
 model MediaItem {
   id    String    @id @default(uuid())
   gigId String
-  gig   Gig       @relation(fields: [gigId], references: [id])
+  gig   Gig       @relation(fields: [gigId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   type  MediaType
   url   String
 }
@@ -202,7 +202,7 @@ model MediaItem {
 model Order {
   id                  String         @id @default(uuid())
   gigId               String
-  gig                 Gig            @relation(fields: [gigId], references: [id])
+  gig                 Gig            @relation(fields: [gigId], references: [id], onDelete: Restrict)
   clientId            String
   client              Client         @relation(fields: [clientId], references: [id])
   freelancerId        String

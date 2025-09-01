@@ -1,4 +1,4 @@
-import { Gig, MediaType } from '@prisma/client';
+import { Gig, MediaType, OrderStatus } from '@prisma/client';
 import {
   Injectable,
   NotFoundException,
@@ -58,6 +58,7 @@ export class GigsService {
                 subCategory: data.subCategory,
                 tools: data.tools ?? [],
                 tags: data.tags ?? [],
+                status: data.status,
                 description: data.description,
                 thirdPartyAgreement: data.thirdPartyAgreement ?? false,
                 packages: packages
@@ -193,14 +194,40 @@ export class GigsService {
 
   async deleteGig(identifier: string, userId: string): Promise<void> {
     try {
-      const gig = await this.getGig(identifier);
-      const freelancer = await this.prisma.freelancer.findUnique({
-        where: { uid: userId },
+      await this.prisma.$transaction(async (tx) => {
+        const gigBasic = await tx.gig.findFirst({
+          where: { OR: [{ slug: identifier }, { id: identifier }] },
+          select: { id: true, userId: true },
+        });
+        if (!gigBasic) throw new NotFoundException(`Gig "${identifier}" not found`);
+
+        const freelancer = await tx.freelancer.findUnique({
+          where: { uid: userId },
+          select: { id: true },
+        });
+        if (!freelancer || gigBasic.userId !== freelancer.id) {
+          throw new ForbiddenException(`Cannot delete gig "${identifier}"`);
+        }
+
+        const hasPending = await tx.order.findFirst({
+          where: {
+            gigId: gigBasic.id,
+            status: { in: [OrderStatus.ACTIVE, OrderStatus.PENDING, OrderStatus.LATE] },
+          },
+          select: { id: true, status: true },
+        });
+        if (hasPending) {
+          throw new ForbiddenException(
+            `Cannot delete gig "${identifier}" because it has pending orders`,
+          );
+        }
+
+        await tx.mediaItem.deleteMany({ where: { gigId: gigBasic.id } });
+        await tx.question.deleteMany({ where: { gigId: gigBasic.id } });
+        await tx.extraService.deleteMany({ where: { gigId: gigBasic.id } });
+        await tx.gigPackage.deleteMany({ where: { gigId: gigBasic.id } });
+        await tx.gig.delete({ where: { id: gigBasic.id } });
       });
-      if (!freelancer || gig.userId !== freelancer.id) {
-        throw new ForbiddenException(`Cannot delete gig "${identifier}"`);
-      }
-      await this.prisma.gig.delete({ where: { id: gig.id } });
       this.logger.info(`Gig "${identifier}" deleted by user "${userId}"`);
     } catch (error) {
       if (
@@ -208,6 +235,7 @@ export class GigsService {
         error instanceof NotFoundException
       )
         throw error;
+      console.log(error);
       this.logger.error(`Failed to delete gig "${identifier}"`, error);
       throw new InternalServerErrorException('Unable to delete gig');
     }

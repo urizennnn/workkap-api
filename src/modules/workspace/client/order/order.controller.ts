@@ -7,6 +7,7 @@ import {
   ValidateSchema,
   OrderDocs,
   NeedsFreelancerAuth,
+  NeedsClientAuth,
 } from 'src/libs';
 
 @Controller()
@@ -16,7 +17,7 @@ export class OrderController {
 
   @OrderDocs.createOrder
   @Post('create')
-  @NeedsFreelancerAuth()
+  @NeedsClientAuth()
   @ValidateSchema({
     body: CreateOrderSchema,
   })

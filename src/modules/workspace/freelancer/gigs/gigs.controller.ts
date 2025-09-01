@@ -40,9 +40,10 @@ export class GigsController {
   async getGig(@Param('identifier') identifier: string) {
     return this.gigsService.getGig(identifier);
   }
+
+  @GigsDocs.deleteGig
   @NeedsFreelancerAuth()
   @Delete('delete/:identifier')
-  @GigsDocs.deleteGig
   async deleteGig(
     @Req() req: Request,
     @Param('identifier') identifier: string,
