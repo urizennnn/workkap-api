@@ -14,6 +14,7 @@ import {
   UpdateFreelancerProfileSchema,
 } from './dto/update-freelancer-profile.dto';
 import {
+    NeedsAuth,
   NeedsFreelancerAuth,
   ValidateSchema,
 } from 'src/libs/common/decorators';
@@ -46,14 +47,14 @@ export class FreelancerController {
   }
 
   @FreelancerWorkspaceDocs.getFreelancers
-  @NeedsFreelancerAuth()
+  @NeedsAuth()
   @Get('all')
   async getFreelancers() {
     return await this.freelancerService.getFreelancers();
   }
 
   @FreelancerWorkspaceDocs.getFreelancer
-  @NeedsFreelancerAuth()
+  @NeedsAuth()
   @Get(':userId')
   async getFreelancer(
     @Param('userId', new ParseUUIDPipe()) userId: string,
