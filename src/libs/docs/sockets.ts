@@ -16,9 +16,21 @@ export const SocketDocs = {
         type: 'object',
         properties: {
           conversationId: { type: 'string' },
-          content: { type: 'string' },
+          content: { type: 'string', nullable: true },
+          attachments: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                url: { type: 'string' },
+                type: { type: 'string', enum: ['IMAGE', 'PDF'] },
+              },
+              required: ['url', 'type'],
+            },
+            nullable: true,
+          },
         },
-        required: ['conversationId', 'content'],
+        required: ['conversationId'],
       },
     }),
   ),
@@ -40,4 +52,5 @@ export const SocketDocs = {
       },
     }),
   ),
-};
+} as const;
+

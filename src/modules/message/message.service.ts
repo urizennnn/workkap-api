@@ -44,7 +44,7 @@ export class MessageService {
   async sendMessage(
     senderId: string,
     payload: SendMessageSchemaType,
-  ): Promise<Message> {
+  ): Promise<any> {
     try {
       const conversation = await this.getConversationById(
         payload.conversationId,
@@ -54,17 +54,27 @@ export class MessageService {
       }
       const receiverId =
         conversation.aId === senderId ? conversation.bId : conversation.aId;
+      const attachments = payload.attachments ?? [];
       const message = await this.prisma.message.create({
         data: {
           conversationId: conversation.id,
           senderId,
           receiverId,
-          content: payload.content,
+          content: payload.content ?? '',
+          attachments: attachments.length ? JSON.stringify(attachments) : null,
           isRead: false,
         },
       });
       await this.redis.cacheMessage(`conversation:${conversation.id}`, message);
-      return message;
+      const result: any = { ...message };
+      if ((message as any).attachments) {
+        try {
+          result.attachments = JSON.parse((message as any).attachments);
+        } catch {
+          result.attachments = [];
+        }
+      }
+      return result;
     } catch (error) {
       this.logger.error('Failed to send message', error);
       throw error;
@@ -76,7 +86,7 @@ export class MessageService {
     otherId: string,
     opts?: { page?: number; limit?: number; markRead?: boolean },
   ): Promise<{
-    messages: Message[];
+    messages: any[];
     unreadCount: number;
     conversationId: string;
   }> {
@@ -108,7 +118,7 @@ export class MessageService {
     conversationId: string,
     userId: string,
     opts?: { page?: number; limit?: number; markRead?: boolean },
-  ): Promise<{ messages: Message[]; unreadCount: number }> {
+  ): Promise<{ messages: any[]; unreadCount: number }> {
     try {
       let messages: Message[] = [];
       try {
@@ -146,8 +156,20 @@ export class MessageService {
         await this.markMessagesAsReadForConversation(conversationId, userId);
       }
 
+      const parsedMessages = (messages as any[]).map((m) => {
+        const mm: any = { ...m };
+        if (m.attachments) {
+          try {
+            mm.attachments = JSON.parse(m.attachments);
+          } catch {
+            mm.attachments = [];
+          }
+        }
+        return mm;
+      });
+
       const unreadCount = await this.countUnreadMessages(userId);
-      return { messages, unreadCount };
+      return { messages: parsedMessages, unreadCount };
     } catch (error) {
       if (error instanceof ForbiddenException) throw error;
       this.logger.error(
@@ -198,7 +220,7 @@ export class MessageService {
         fullName: string | null;
         username: string | null;
       };
-      lastMessage: Message | null;
+      lastMessage: any | null;
       unreadCount: number;
       lastActivityAt: Date;
     }>;
@@ -234,7 +256,9 @@ export class MessageService {
         where: { id: { in: otherUserIds } },
         select: { id: true, email: true, fullName: true, username: true },
       });
-      const userMap = new Map(users.map((u) => [u.id, u]));
+      const userMap = new Map<string, (typeof users)[number]>(
+        users.map((u) => [u.id, u]),
+      );
 
       const latestMessages = await this.prisma.message.findMany({
         where: { conversationId: { in: conversationIds } },
@@ -257,7 +281,20 @@ export class MessageService {
               fullName: null,
               username: null,
             } as const);
-          const lastMessage = lastByConv.get(c.id) ?? null;
+          const rawLastMessage = lastByConv.get(c.id) ?? null;
+          let lastMessage: any = null;
+          if (rawLastMessage) {
+            lastMessage = { ...rawLastMessage } as any;
+            if ((rawLastMessage as any).attachments) {
+              try {
+                lastMessage.attachments = JSON.parse(
+                  (rawLastMessage as any).attachments,
+                );
+              } catch {
+                lastMessage.attachments = [];
+              }
+            }
+          }
           const unreadCount = unreadMap.get(c.id) ?? 0;
           const lastActivityAt =
             lastMessage?.createdAt ?? c.updatedAt ?? c.createdAt;
@@ -291,3 +328,4 @@ export class MessageService {
     }
   }
 }
+
