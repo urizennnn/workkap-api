@@ -9,9 +9,13 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { GigsService } from './gigs.service';
-import { NeedsFreelancerAuth, GigsDocs } from 'src/libs';
+import {
+  NeedsFreelancerAuth,
+  GigsDocs,
+  ValidateSchema,
+} from 'src/libs';
 import type { AuthorizedRequest } from 'src/libs/@types/express';
-import { GigSchemaType } from './dto';
+import { GigSchema, GigSchemaType } from './dto';
 
 @Controller()
 @GigsDocs.controller
@@ -21,6 +25,7 @@ export class GigsController {
   @GigsDocs.createGig
   @NeedsFreelancerAuth()
   @Post('updateOrCreate')
+  @ValidateSchema({ body: GigSchema })
   async createGig(@Req() req: Request, @Body() data: GigSchemaType) {
     const userId = (req as AuthorizedRequest).user.userId;
     return this.gigsService.createGig(data, userId);

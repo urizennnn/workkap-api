@@ -226,7 +226,7 @@ export const UserControllerSwagger = {
       schema: errorSchema('Invalid update data'),
     }),
     ApiBody({
-      description: 'Fields to update',
+      description: 'Fields to update (all optional)',
       required: true,
       schema: {
         type: 'object',
@@ -239,11 +239,10 @@ export const UserControllerSwagger = {
           about: { type: 'string' },
           language: { type: 'string' },
         },
-        required: ['email'],
       },
       examples: {
         example1: {
-          summary: 'Update user details payload. Not all fields are required.',
+          summary: 'Update user details payload.  Not all fields are required.',
           value: {
             email: 'example@gmail.com',
             password: 'NewStrongPassword123!',
@@ -477,3 +476,4 @@ export const UserControllerSwagger = {
     }),
   ),
 };
+

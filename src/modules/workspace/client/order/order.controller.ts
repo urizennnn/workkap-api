@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req, Param } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Request } from 'express';
 import { CreateOrderSchema, CreateOrderSchemaType } from './dto';
@@ -6,7 +6,6 @@ import {
   JwtPayload,
   ValidateSchema,
   OrderDocs,
-  NeedsFreelancerAuth,
   NeedsClientAuth,
 } from 'src/libs';
 
@@ -25,4 +24,13 @@ export class OrderController {
     const user = req.user as JwtPayload;
     return this.orderService.createOrder(body, user.userId);
   }
+
+  @OrderDocs.payFreelancer
+  @Post('pay/:orderId')
+  @NeedsClientAuth()
+  async payFreelancer(@Req() req: Request, @Param('orderId') orderId: string) {
+    const user = req.user as JwtPayload;
+    return this.orderService.payFreelancer(orderId, user.userId);
+  }
 }
+

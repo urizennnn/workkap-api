@@ -10,6 +10,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
+import { GigStatus } from '@prisma/client';
 import { errorSchema } from './error-schema';
 
 export const GigsControllerSwagger = {
@@ -46,6 +47,7 @@ export const GigsControllerSwagger = {
         type: 'object',
         properties: {
           slug: { type: 'string' },
+          status: { type: 'string', enum: Object.values(GigStatus) },
           title: { type: 'string' },
           mainCategory: { type: 'string' },
           subCategory: { type: 'string' },
@@ -116,7 +118,7 @@ export const GigsControllerSwagger = {
             },
           },
         },
-        required: ['title', 'mainCategory', 'subCategory', 'description'],
+        required: ['status', 'title', 'mainCategory', 'subCategory'],
       },
     }),
   ),
@@ -161,3 +163,4 @@ export const GigsControllerSwagger = {
     }),
   ),
 };
+

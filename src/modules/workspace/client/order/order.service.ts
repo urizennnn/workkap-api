@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { CreateOrderSchemaType } from './dto';
 import { PrismaService, WorkkapLogger, PaymentService } from 'src/libs';
 import { MessageService } from '../../../message/message.service';
@@ -17,7 +21,7 @@ export class OrderService {
   async createOrder(
     orderData: CreateOrderSchemaType,
     userId: string,
-  ): Promise<{ order: Order; payment: PaystackInitializeResponse }> {
+  ): Promise<{ order: Order }> {
     try {
       const [user, client, gig, freelancer] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
@@ -77,16 +81,43 @@ export class OrderService {
           gig.title,
         );
       }
-      const paymentTx = await this.paymentService.initializePayment(
-        userId,
-        order.total ?? 0,
-        order.id,
-      );
-      return { order, payment: paymentTx };
+      return { order };
     } catch (error) {
       this.logger.error(`Failed to create order for user "${userId}"`, error);
       throw new NotFoundException('Unable to create order');
     }
+  }
+
+  async payFreelancer(
+    orderId: string,
+    clientUserId: string,
+  ): Promise<PaystackInitializeResponse> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    const client = await this.prisma.client.findUnique({
+      where: { uid: clientUserId },
+    });
+    if (!client || client.id !== order.clientId) {
+      throw new ForbiddenException(
+        'You are not permitted to pay for this order',
+      );
+    }
+    const freelancer = await this.prisma.freelancer.findUnique({
+      where: { id: order.freelancerId },
+    });
+    if (!freelancer) {
+      throw new NotFoundException('Freelancer not found');
+    }
+    const payment = await this.paymentService.initializePayment(
+      freelancer.uid,
+      order.total ?? 0,
+      order.id,
+    );
+    return payment;
   }
 }
 

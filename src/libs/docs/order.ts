@@ -6,6 +6,9 @@ import {
   ApiBody,
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiParam,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { PaymentMethod } from '@prisma/client';
 import { errorSchema } from './error-schema';
@@ -78,4 +81,35 @@ export const OrderControllerSwagger = {
       },
     }),
   ),
+
+  payFreelancer: applyDecorators(
+    ApiOperation({
+      summary: 'Initialize payment for an existing order',
+      description: 'POST /api/workspace/client/order/pay/:orderId',
+    }),
+    ApiOkResponse({
+      description: 'Payment initialized',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: {
+            type: 'string',
+            example: 'Payment initialized successfully',
+          },
+          data: { type: 'object' },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+    ApiNotFoundResponse({
+      description: 'Order or freelancer not found',
+      schema: errorSchema('Order not found'),
+    }),
+    ApiParam({ name: 'orderId', description: 'Order ID to pay for' }),
+  ),
 };
+

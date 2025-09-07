@@ -1,13 +1,11 @@
 export { UserControllerSwagger as Docs } from './user';
 export { GigsControllerSwagger as GigsDocs } from './gigs';
 export { OrderControllerSwagger as OrderDocs } from './order';
-export { AppControllerSwagger } from './app';
-export {
-  WorkspaceControllerSwagger as WorkspaceDocs,
-  ClientControllerSwagger as ClientDocs,
-  FreelancerWorkspaceControllerSwagger as FreelancerWorkspaceDocs,
-  FreelancerOrdersControllerSwagger as FreelancerOrderDocs,
-  ClientFreelancerControllerSwagger as ClientFreelancerDocs,
-} from './workspace';
+export * from './app';
+export * from './sockets';
+export { WorkspaceControllerSwagger as WorkspaceDocs } from './workspace';
+export { ClientControllerSwagger as ClientDocs } from './workspace';
+export { FreelancerWorkspaceControllerSwagger as FreelancerWorkspaceDocs } from './workspace';
+export { FreelancerOrdersControllerSwagger as FreelancerOrderDocs } from './workspace';
+export { ClientFreelancerControllerSwagger as ClientFreelancerDocs } from './workspace';
 export { errorSchema } from './error-schema';
-export { SocketDocs } from './sockets';
