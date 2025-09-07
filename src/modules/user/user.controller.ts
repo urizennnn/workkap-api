@@ -33,7 +33,7 @@ import {
   UpdateUser,
   UpdateUserSchema,
 } from './dto';
-import { User, SubscriptionPlan } from '@prisma/client';
+import { SubscriptionPlan } from '@prisma/client';
 
 @Controller('users')
 @Docs.controller
@@ -145,7 +145,7 @@ export class UserController {
 
   @Patch(':id')
   @Docs.patchUser
-  async patchUser(@Param('id') id: string, @Body() body: Partial<User>) {
+  async patchUser(@Param('id') id: string, @Body() body: Partial<UpdateUser>) {
     return this.userService.patchUser(id, body);
   }
 

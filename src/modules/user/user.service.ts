@@ -32,8 +32,9 @@ import {
   WorkkapLogger,
   SengridService,
   RedisService,
-  PaystackService,
+  PaymentService,
 } from 'src/libs';
+import { PaystackInitializeResponse } from 'src/libs/paystack/types';
 
 @Injectable()
 export class UserService {
@@ -43,7 +44,7 @@ export class UserService {
     private readonly jwtService: JWTService,
     private readonly email: SengridService,
     private readonly redis: RedisService,
-    private readonly paystack: PaystackService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   private generateOtp(): string {
@@ -74,7 +75,7 @@ export class UserService {
           country: payload.country,
           password: hashedPassword,
           //FIX: remove this when you get email service working
-          isVerified:true,
+          isVerified: true,
           fullName: payload.fullName,
           registrationMethod: RegistrationMethod.COMBINATION,
           username: payload.username,
@@ -131,7 +132,6 @@ export class UserService {
         });
         user.subscriptionStatus = SubscriptionStatus.STALE;
       }
-
       if (user.registrationMethod !== RegistrationMethod.COMBINATION) {
         this.logger.info(
           `User registration method is not combination for email: ${payload.email}`,
@@ -140,7 +140,6 @@ export class UserService {
           `An account was found with a different login method. Please use ${user.registrationMethod} to login.`,
         );
       }
-
       const hashedInput = await comparePassword(
         payload.password,
         user.password!,
@@ -151,11 +150,9 @@ export class UserService {
         );
         throw new UnauthorizedException('Invalid email or password');
       }
-
       if (!user.isVerified) {
         throw new UnauthorizedException('Email not verified');
       }
-
       this.logger.info(`User logged in successfully with ID: ${user.id}`);
       const tokenPayload: JwtPayload = {
         userId: user.id,
@@ -163,7 +160,6 @@ export class UserService {
       };
       const accessToken = this.jwtService.sign(tokenPayload);
       const refreshToken = this.jwtService.signRefreshToken(tokenPayload);
-
       return {
         status: 'success',
         data: { user, tokens: { accessToken, refreshToken } },
@@ -200,7 +196,6 @@ export class UserService {
       let user = await this.prisma.user.findUnique({
         where: { email: googleUser.email },
       });
-
       if (!user) {
         user = await this.prisma.user.create({
           data: {
@@ -224,14 +219,12 @@ export class UserService {
           await this.prisma.freelancer.create({ data: { uid: user.id } });
         }
       }
-
       const tokenPayload: JwtPayload = {
         userId: user.id,
         userType: UserType.FREELANCER,
       };
       const accessToken = this.jwtService.sign(tokenPayload);
       const refreshToken = this.jwtService.signRefreshToken(tokenPayload);
-
       return {
         status: 'success',
         data: { user, tokens: { accessToken, refreshToken } },
@@ -256,7 +249,6 @@ export class UserService {
     if (user.userType === profile) {
       throw new BadRequestException('Already using this profile');
     }
-
     if (profile === UserType.FREELANCER) {
       const existing = await this.prisma.freelancer.findUnique({
         where: { uid: user.userId },
@@ -272,7 +264,6 @@ export class UserService {
         await this.prisma.client.create({ data: { uid: user.userId } });
       }
     }
-
     user.userType = profile;
     const payload: JwtPayload = {
       userId: user.userId,
@@ -293,7 +284,6 @@ export class UserService {
         this.logger.error('User not found for update: %s', userId);
         throw new NotFoundException('User not found');
       }
-
       if (
         payload.password &&
         user.registrationMethod !== RegistrationMethod.COMBINATION
@@ -302,24 +292,20 @@ export class UserService {
           'User does not meet the requirement. Cannot update password.',
         );
       }
-
-      const data: Record<string, unknown> = {};
+      const data: Record<string, any> = {};
       if (payload.email !== undefined) data.email = payload.email;
       if (payload.fullName !== undefined) data.fullName = payload.fullName;
       if (payload.username !== undefined) data.username = payload.username;
       if (payload.country !== undefined) data.country = payload.country;
       if (payload.about !== undefined) data.about = payload.about;
       if (payload.language !== undefined) data.language = payload.language;
-
       if (payload.password) {
         data.password = await hashPassword(payload.password);
       }
-
       const updatedUser = await this.prisma.user.update({
         where: { id: user.id },
         data,
       });
-
       return { status: 'success', data: updatedUser };
     } catch (error: unknown) {
       this.logger.error('Error updating user details', error);
@@ -341,6 +327,7 @@ export class UserService {
       throw new InternalServerErrorException('Failed to update user details');
     }
   }
+
   async getUserById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -366,7 +353,7 @@ export class UserService {
 
   async patchUser(
     id: string,
-    data: Partial<User>,
+    data: Partial<UpdateUser>,
   ): Promise<{ status: 'success'; data: User }> {
     try {
       const updated = await this.prisma.user.update({ where: { id }, data });
@@ -448,7 +435,7 @@ export class UserService {
   async subscribe(
     id: string,
     plan: SubscriptionPlan,
-  ): Promise<{ status: 'success'; data: Record<string, unknown> }> {
+  ): Promise<{ status: 'success'; data: PaystackInitializeResponse }> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     const amount =
@@ -457,10 +444,7 @@ export class UserService {
         : plan === SubscriptionPlan.STARTUP
           ? 2900
           : 5900;
-    const tx = await this.paystack.initializeTransaction(
-      user.email!,
-      amount * 100,
-    );
+    const tx = await this.paymentService.initializePayment(id, amount);
     const nextDate = new Date();
     nextDate.setMonth(nextDate.getMonth() + 1);
     await this.prisma.user.update({
@@ -491,7 +475,6 @@ export class UserService {
       if (!payload.isRefreshToken) {
         throw new UnauthorizedException('Invalid refresh token');
       }
-
       const newAccessToken = this.jwtService.sign({
         userId: payload.userId,
         userType: payload.userType,
@@ -500,7 +483,6 @@ export class UserService {
         userId: payload.userId,
         userType: payload.userType,
       });
-
       return {
         status: 'success',
         data: { accessToken: newAccessToken, refreshToken: newRefreshToken },
@@ -511,3 +493,4 @@ export class UserService {
     }
   }
 }
+

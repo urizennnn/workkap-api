@@ -7,3 +7,4 @@ export * from './utils';
 export * from './redis';
 export * from './email/index';
 export * from './paystack';
+export * from './payment';

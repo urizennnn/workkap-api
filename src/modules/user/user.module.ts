@@ -6,12 +6,13 @@ import {
   JWTService,
   EmailModule,
   RedisModule,
-  PaystackModule,
+  PaymentModule,
 } from 'src/libs';
 
 @Module({
-  imports: [GoogleAuthModule, EmailModule, RedisModule, PaystackModule],
+  imports: [GoogleAuthModule, EmailModule, RedisModule, PaymentModule],
   controllers: [UserController],
   providers: [UserService, JWTService],
 })
 export class UserModule {}
+

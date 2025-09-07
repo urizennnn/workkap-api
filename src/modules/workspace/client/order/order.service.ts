@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderSchemaType } from './dto';
-import { PrismaService, WorkkapLogger } from 'src/libs';
+import { PrismaService, WorkkapLogger, PaymentService } from 'src/libs';
 import { MessageService } from '../../../message/message.service';
 import { Order, PaymentMethod } from '@prisma/client';
+import { PaystackInitializeResponse } from 'src/libs/paystack/types';
 
 @Injectable()
 export class OrderService {
@@ -10,12 +11,13 @@ export class OrderService {
     private readonly prisma: PrismaService,
     private readonly logger: WorkkapLogger,
     private readonly messageService: MessageService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   async createOrder(
     orderData: CreateOrderSchemaType,
     userId: string,
-  ): Promise<Order> {
+  ): Promise<{ order: Order; payment: PaystackInitializeResponse }> {
     try {
       const [user, client, gig, freelancer] = await Promise.all([
         this.prisma.user.findUnique({ where: { id: userId } }),
@@ -25,7 +27,6 @@ export class OrderService {
           where: { id: orderData.freelancerId },
         }),
       ]);
-
       if (!user) throw new NotFoundException('User not found');
       if (!client) throw new NotFoundException('Client not found');
       this.logger.info(`Creating order for user ID: ${userId}`);
@@ -69,7 +70,6 @@ export class OrderService {
           payment: orderData.payment as PaymentMethod,
         },
       });
-
       if (gig && freelancer) {
         await this.messageService.getOrCreateConversation(
           userId,
@@ -77,10 +77,16 @@ export class OrderService {
           gig.title,
         );
       }
-      return order;
+      const paymentTx = await this.paymentService.initializePayment(
+        userId,
+        order.total ?? 0,
+        order.id,
+      );
+      return { order, payment: paymentTx };
     } catch (error) {
       this.logger.error(`Failed to create order for user "${userId}"`, error);
       throw new NotFoundException('Unable to create order');
     }
   }
 }
+

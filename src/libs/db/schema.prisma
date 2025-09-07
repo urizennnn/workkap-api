@@ -21,6 +21,13 @@ enum PaymentMethod {
   BANK_TRANSFER
 }
 
+enum PaymentStatus {
+  INITIALIZED
+  SUCCESS
+  FAILED
+  PENDING
+}
+
 enum OrderStatus {
   ACTIVE
   PENDING
@@ -89,6 +96,7 @@ model User {
   Freelancer           Freelancer?
   Client               Client?
   subscriptions        Subscription[]
+  payments             Payment[]
 
   @@map("users")
 }
@@ -215,6 +223,7 @@ model Order {
   total               Int            @default(1)
   modeOfWorkingId     String?        @unique
   modeOfWorking       ModeOfWorking? @relation("OrderMode", fields: [modeOfWorkingId], references: [id])
+  payments            Payment[]
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 
@@ -276,4 +285,32 @@ model Message {
   updatedAt      DateTime     @updatedAt
 
   @@map("messages")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  orderId   String?
+  order     Order?        @relation(fields: [orderId], references: [id])
+  reference String        @unique
+  amount    Decimal       @db.Decimal(10, 2)
+  currency  String
+  status    PaymentStatus @default(INITIALIZED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  histories PaymentHistory[]
+
+  @@map("payments")
+}
+
+model PaymentHistory {
+  id        String        @id @default(uuid())
+  paymentId String
+  payment   Payment       @relation(fields: [paymentId], references: [id])
+  status    PaymentStatus
+  message   String?
+  createdAt DateTime      @default(now())
+
+  @@map("payment_histories")
 }
