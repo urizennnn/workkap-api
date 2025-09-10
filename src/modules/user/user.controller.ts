@@ -127,6 +127,16 @@ export class UserController {
     return this.userService.switchProfile(user, body.profile);
   }
 
+  @Get('info')
+  @Docs.getInfo
+  async getInfo(@Headers('authorization') auth?: string) {
+    if (!auth) throw new UnauthorizedException('Missing authorization header');
+    const [type, token] = auth.split(' ');
+    if (type !== 'Bearer' || !token)
+      throw new UnauthorizedException('Invalid authorization header');
+    return this.userService.getInfo(token);
+  }
+
   @Get('verify-token')
   @Docs.verifyToken
   async verifyToken(@Headers('authorization') auth?: string) {

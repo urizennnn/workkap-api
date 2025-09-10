@@ -413,6 +413,24 @@ export const UserControllerSwagger = {
     }),
   ),
 
+  getInfo: applyDecorators(
+    ApiOperation({ summary: 'Get user and profile info from token' }),
+    ApiOkResponse({
+      description: 'User and profile information',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: { type: 'object' },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Invalid or expired token',
+      schema: errorSchema('Invalid or expired token'),
+    }),
+  ),
+
   verifyToken: applyDecorators(
     ApiOperation({ summary: 'Verify bearer token' }),
     ApiOkResponse({
@@ -476,4 +494,3 @@ export const UserControllerSwagger = {
     }),
   ),
 };
-

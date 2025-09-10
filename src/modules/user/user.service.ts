@@ -21,6 +21,8 @@ import {
   Subscription,
   SubscriptionPlan,
   SubscriptionStatus,
+  Client,
+  Freelancer,
 } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { comparePassword, hashPassword } from './utils';
@@ -59,6 +61,39 @@ export class UserService {
       return { status: 'success', data: payload };
     } catch (error: unknown) {
       this.logger.error('Failed to verify token', error);
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  async getInfo(token: string): Promise<{
+    status: 'success';
+    data:
+      | { user: User; client: Client }
+      | { user: User; freelancer: Freelancer };
+  }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      if (payload.userType === UserType.CLIENT) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: payload.userId },
+          include: { Client: true },
+        });
+        if (!user) throw new NotFoundException('User not found');
+        const { Client: client, ...rest } = user as User & { Client: Client };
+        return { status: 'success', data: { user: rest, client } };
+      }
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.userId },
+        include: { Freelancer: true },
+      });
+      if (!user) throw new NotFoundException('User not found');
+      const { Freelancer: freelancer, ...rest } = user as User & {
+        Freelancer: Freelancer;
+      };
+      return { status: 'success', data: { user: rest, freelancer } };
+    } catch (error: unknown) {
+      this.logger.error('Failed to get user info', error);
+      if (error instanceof NotFoundException) throw error;
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
@@ -493,4 +528,3 @@ export class UserService {
     }
   }
 }
-
