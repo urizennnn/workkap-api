@@ -42,7 +42,7 @@ export class MessageGateway implements OnGatewayConnection {
       const count = await this.messageService.countUnreadMessages(
         payload.userId,
       );
-      client.emit('unread_count', { count });
+      this.server.to(payload.userId).emit('unread_count', { count });
     } catch {
       client.disconnect(true);
     }
@@ -56,7 +56,7 @@ export class MessageGateway implements OnGatewayConnection {
     const senderId = client.data.userId!;
     const message = await this.messageService.sendMessage(senderId, body);
     this.server.to(message.receiverId).emit('new_message', message);
-    client.emit('new_message', message);
+    this.server.to(senderId).emit('new_message', message);
     const count = await this.messageService.countUnreadMessages(
       message.receiverId,
     );
@@ -74,6 +74,6 @@ export class MessageGateway implements OnGatewayConnection {
       userId,
     );
     const count = await this.messageService.countUnreadMessages(userId);
-    client.emit('unread_count', { count });
+    this.server.to(userId).emit('unread_count', { count });
   }
 }
