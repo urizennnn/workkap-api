@@ -9,6 +9,6 @@ import { JWTService } from 'src/libs';
   imports: [],
   controllers: [SocketController, MessageController],
   providers: [MessageService, MessageGateway, JWTService],
-  exports: [MessageService, MessageGateway],
+  exports: [MessageService],
 })
 export class MessageModule {}

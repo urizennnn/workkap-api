@@ -10,15 +10,11 @@ import {
 } from './dto';
 import { NeedsAuth, ValidateSchema } from 'src/libs';
 import type { AuthorizedRequest } from 'src/libs/@types/express';
-import { MessageGateway } from './message.gateway';
 
 @Controller('socket')
 @SocketDocs.controller
 export class SocketController {
-  constructor(
-    private readonly messageService: MessageService,
-    private readonly messageGateway: MessageGateway,
-  ) {}
+  constructor(private readonly messageService: MessageService) {}
 
   @Post('send-message')
   @NeedsAuth()
@@ -27,19 +23,6 @@ export class SocketController {
   async sendMessage(@Req() req: Request, @Body() body: SendMessageSchemaType) {
     const userId = (req as AuthorizedRequest).user.userId;
     const message = await this.messageService.sendMessage(userId, body);
-
-    this.messageGateway.server.to(userId).emit('new_message', message);
-    this.messageGateway.server
-      .to(message.receiverId)
-      .emit('new_message', message);
-
-    const count = await this.messageService.countUnreadMessages(
-      message.receiverId,
-    );
-    this.messageGateway.server
-      .to(message.receiverId)
-      .emit('unread_count', { count });
-
     return message;
   }
 
