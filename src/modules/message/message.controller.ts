@@ -50,11 +50,11 @@ export class MessageController {
 
       const markRead = markReadQ === undefined ? true : markReadQ !== 'false';
 
-      return this.messageService.getConversationBetweenUsers(
-        userId,
-        otherUserId,
-        { page, limit, markRead },
-      );
+      const userType =
+        req.user && typeof req.user === 'object'
+          ? ((req.user as any).userType ?? undefined)
+          : undefined;
+      return this.messageService.getConversationBetweenUsers(userId, otherUserId, { page, limit, markRead }, userType);
     } catch {
       throw new BadRequestException('Invalid request');
     }
@@ -70,7 +70,10 @@ export class MessageController {
         : undefined;
 
     if (!userId) throw new BadRequestException('Unable to resolve user id');
-
-    return this.messageService.listUserConversations(userId);
+    const userType =
+      req.user && typeof req.user === 'object'
+        ? ((req.user as any).userType ?? undefined)
+        : undefined;
+    return this.messageService.listUserConversations(userId, userType);
   }
 }

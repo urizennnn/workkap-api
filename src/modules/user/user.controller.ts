@@ -155,4 +155,11 @@ export class UserController {
   async refreshToken(@Body() body: RefreshToken) {
     return this.userService.refreshAccessToken(body.refreshToken);
   }
+
+  @Get('me')
+  @NeedsAuth()
+  async getMe(@Req() req: Request) {
+    const user = (req as AuthorizedRequest).user;
+    return this.userService.getMe(user);
+  }
 }

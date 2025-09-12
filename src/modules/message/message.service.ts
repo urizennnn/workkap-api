@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Conversation, Message } from '@prisma/client';
 import { PrismaService, RedisService, WorkkapLogger } from 'src/libs';
+import { UserType } from 'src/libs/auth/jwt/jwt.service';
 import { SendMessageSchemaType } from './dto';
 
 @Injectable()
@@ -85,6 +86,7 @@ export class MessageService {
     selfId: string,
     otherId: string,
     opts?: { page?: number; limit?: number; markRead?: boolean },
+    viewerType?: UserType,
   ): Promise<{
     messages: any[];
     unreadCount: number;
@@ -92,11 +94,7 @@ export class MessageService {
   }> {
     try {
       const conversation = await this.getOrCreateConversation(selfId, otherId);
-      const result = await this.getConversationMessages(
-        conversation.id,
-        selfId,
-        opts,
-      );
+      const result = await this.getConversationMessages(conversation.id, selfId, opts, viewerType);
       return { ...result, conversationId: conversation.id };
     } catch (error) {
       if (
@@ -118,6 +116,7 @@ export class MessageService {
     conversationId: string,
     userId: string,
     opts?: { page?: number; limit?: number; markRead?: boolean },
+    viewerType?: UserType,
   ): Promise<{ messages: any[]; unreadCount: number }> {
     try {
       let messages: Message[] = [];
@@ -129,9 +128,13 @@ export class MessageService {
           if (opts?.page && opts?.limit) {
             const start = (opts.page - 1) * opts.limit;
             const end = start + opts.limit;
-            messages = (cached as Message[]).slice(start, end);
+            messages = (cached as Message[])
+              .filter((m) => (viewerType === UserType.CLIENT ? m.receiverId === userId : true))
+              .slice(start, end);
           } else {
-            messages = cached as Message[];
+            messages = (cached as Message[]).filter((m) =>
+              viewerType === UserType.CLIENT ? m.receiverId === userId : true,
+            );
           }
         }
       } catch (err) {
@@ -144,7 +147,10 @@ export class MessageService {
 
       if (!messages.length) {
         messages = await this.prisma.message.findMany({
-          where: { conversationId },
+          where: {
+            conversationId,
+            ...(viewerType === UserType.CLIENT ? { receiverId: userId } : {}),
+          },
           orderBy: { createdAt: 'asc' },
           ...(opts?.page && opts?.limit
             ? { skip: (opts.page - 1) * opts.limit, take: opts.limit }
@@ -209,7 +215,7 @@ export class MessageService {
     });
   }
 
-  async listUserConversations(userId: string): Promise<{
+  async listUserConversations(userId: string, viewerType?: UserType): Promise<{
     conversations: Array<{
       id: string;
       topic: string | null;
@@ -261,7 +267,10 @@ export class MessageService {
       );
 
       const latestMessages = await this.prisma.message.findMany({
-        where: { conversationId: { in: conversationIds } },
+        where: {
+          conversationId: { in: conversationIds },
+          ...(viewerType === UserType.CLIENT ? { receiverId: userId } : {}),
+        },
         orderBy: { createdAt: 'desc' },
       });
       const lastByConv = new Map<string, Message>();
@@ -270,7 +279,12 @@ export class MessageService {
           lastByConv.set(m.conversationId, m);
       }
 
-      const items = conversations
+      const filteredConversations =
+        viewerType === UserType.CLIENT
+          ? conversations.filter((c) => lastByConv.has(c.id))
+          : conversations;
+
+      const items = filteredConversations
         .map((c) => {
           const otherId = c.aId === userId ? c.bId : c.aId;
           const otherUser =
@@ -296,8 +310,7 @@ export class MessageService {
             }
           }
           const unreadCount = unreadMap.get(c.id) ?? 0;
-          const lastActivityAt =
-            lastMessage?.createdAt ?? c.updatedAt ?? c.createdAt;
+          const lastActivityAt = lastMessage?.createdAt ?? c.updatedAt ?? c.createdAt;
           return {
             id: c.id,
             topic: c.topic ?? null,
@@ -328,4 +341,3 @@ export class MessageService {
     }
   }
 }
-

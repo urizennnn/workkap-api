@@ -492,5 +492,15 @@ export class UserService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
-}
 
+  async getMe(payload: JwtPayload): Promise<{ status: 'success'; data: any }> {
+    const base = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!base) throw new NotFoundException('User not found');
+    if (payload.userType === UserType.CLIENT) {
+      const client = await this.prisma.client.findUnique({ where: { uid: base.id } });
+      return { status: 'success', data: { user: base, client } };
+    }
+    const freelancer = await this.prisma.freelancer.findUnique({ where: { uid: base.id } });
+    return { status: 'success', data: { user: base, freelancer } };
+  }
+}
