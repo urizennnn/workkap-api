@@ -32,6 +32,7 @@ Implementation reference:
 - Namespace/Path: Default namespace, default Socket.IO path (`/socket.io`).
 - Host/Port: Same host and port as the HTTP API server.
 - CORS: Enabled and restricted by `ALLOWED_ORIGINS` (see `src/main.ts`).
+- CORS: Enabled; the Socket.IO gateway currently allows any origin via `@WebSocketGateway({ cors: true })` (see `src/modules/message/message.gateway.ts`). HTTP CORS restrictions via `ALLOWED_ORIGINS` in `src/main.ts` do not apply to the socket gateway unless configured on the gateway itself.
 - Auth: JWT required in the Socket.IO handshake (see below).
 
 The WebSocket gateway is independent of the HTTP routing prefix (`/api`) used for REST; Socket.IO uses its own default path.
@@ -204,5 +205,5 @@ Socket.IO automatically attempts reconnection. The handshake (including JWT) re-
 
 - Prefer `auth.token` over query parameters for JWT.
 - If you proxy the API, ensure the Socket.IO path `/socket.io` is forwarded and websockets are enabled.
-- Ensure the client origin is included in `ALLOWED_ORIGINS` (see `src/main.ts`).
-- For local dev, default origins include `http://localhost:5173` unless overridden.
+- The socket gateway's CORS is configured on the gateway itself and currently allows all origins. `ALLOWED_ORIGINS` in `src/main.ts` applies to HTTP only. To restrict socket origins, set `@WebSocketGateway({ cors: { origin: ["https://your-app"] } })`.
+- For local dev, HTTP CORS default origins include `http://localhost:5173` unless overridden.
