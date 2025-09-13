@@ -8,6 +8,7 @@ import {
   ApiParam,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { UserType } from 'src/libs/auth';
 import { errorSchema } from './error-schema';
@@ -475,5 +476,35 @@ export const UserControllerSwagger = {
       },
     }),
   ),
-};
 
+  exchangeTicket: applyDecorators(
+    ApiOperation({ summary: 'Exchange login redirect ticket for tokens' }),
+    ApiOkResponse({
+      description: 'Ticket exchanged successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: {
+            type: 'object',
+            properties: {
+              user: { type: 'object' },
+              tokens: {
+                type: 'object',
+                properties: {
+                  accessToken: { type: 'string' },
+                  refreshToken: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiParam({ name: 'ticket', description: 'Login redirect ticket' }),
+    ApiNotFoundResponse({
+      description: 'Invalid or expired ticket',
+      schema: errorSchema('Invalid or expired ticket'),
+    }),
+  ),
+};

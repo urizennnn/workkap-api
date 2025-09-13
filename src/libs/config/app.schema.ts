@@ -23,6 +23,10 @@ export class AppConfigSchema {
   })
   allowed_origins: string[] = [];
 
+  @Expose({ name: 'CLIENT_BASE_URL' })
+  @IsString()
+  client_base_url: string;
+
   @Expose({ name: 'DATABASE_URL' })
   @IsString()
   database_url!: string;

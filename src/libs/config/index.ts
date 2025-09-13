@@ -18,6 +18,7 @@ export const appConfigFactory = registerAs('app', () => {
   const databaseName = database.pathname.replace(/^\/+/, '');
   return {
     app_name: env.APP_NAME,
+    client_base_url: env.client_base_url.replace(/\/+$/, ''),
     log_level: env.log_level,
     status: env.node_env,
     port: (env.port || 4000) as 4000,

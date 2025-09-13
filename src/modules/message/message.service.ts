@@ -94,7 +94,12 @@ export class MessageService {
   }> {
     try {
       const conversation = await this.getOrCreateConversation(selfId, otherId);
-      const result = await this.getConversationMessages(conversation.id, selfId, opts, viewerType);
+      const result = await this.getConversationMessages(
+        conversation.id,
+        selfId,
+        opts,
+        viewerType,
+      );
       return { ...result, conversationId: conversation.id };
     } catch (error) {
       if (
@@ -128,13 +133,9 @@ export class MessageService {
           if (opts?.page && opts?.limit) {
             const start = (opts.page - 1) * opts.limit;
             const end = start + opts.limit;
-            messages = (cached as Message[])
-              .filter((m) => (viewerType === UserType.CLIENT ? m.receiverId === userId : true))
-              .slice(start, end);
+            messages = (cached as Message[]).slice(start, end);
           } else {
-            messages = (cached as Message[]).filter((m) =>
-              viewerType === UserType.CLIENT ? m.receiverId === userId : true,
-            );
+            messages = cached as Message[];
           }
         }
       } catch (err) {
@@ -147,10 +148,7 @@ export class MessageService {
 
       if (!messages.length) {
         messages = await this.prisma.message.findMany({
-          where: {
-            conversationId,
-            ...(viewerType === UserType.CLIENT ? { receiverId: userId } : {}),
-          },
+          where: { conversationId },
           orderBy: { createdAt: 'asc' },
           ...(opts?.page && opts?.limit
             ? { skip: (opts.page - 1) * opts.limit, take: opts.limit }
@@ -215,7 +213,10 @@ export class MessageService {
     });
   }
 
-  async listUserConversations(userId: string, viewerType?: UserType): Promise<{
+  async listUserConversations(
+    userId: string,
+    viewerType?: UserType,
+  ): Promise<{
     conversations: Array<{
       id: string;
       topic: string | null;
@@ -267,10 +268,7 @@ export class MessageService {
       );
 
       const latestMessages = await this.prisma.message.findMany({
-        where: {
-          conversationId: { in: conversationIds },
-          ...(viewerType === UserType.CLIENT ? { receiverId: userId } : {}),
-        },
+        where: { conversationId: { in: conversationIds } },
         orderBy: { createdAt: 'desc' },
       });
       const lastByConv = new Map<string, Message>();
@@ -279,10 +277,7 @@ export class MessageService {
           lastByConv.set(m.conversationId, m);
       }
 
-      const filteredConversations =
-        viewerType === UserType.CLIENT
-          ? conversations.filter((c) => lastByConv.has(c.id))
-          : conversations;
+      const filteredConversations = conversations;
 
       const items = filteredConversations
         .map((c) => {

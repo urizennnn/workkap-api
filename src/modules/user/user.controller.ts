@@ -4,12 +4,14 @@ import {
   Post,
   Get,
   Req,
+  Res,
   Patch,
   Param,
   Headers,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Google, Docs, NeedsAuth, ValidateSchema } from 'src/libs';
 import type { AuthorizedRequest, GoogleRequest } from 'src/libs/@types/express';
 import { UserService } from './user.service';
@@ -33,12 +35,16 @@ import {
   UpdateUser,
   UpdateUserSchema,
 } from './dto';
-import { SubscriptionPlan } from '@prisma/client';
+import { RegistrationMethod, SubscriptionPlan } from '@prisma/client';
+import { UnifiedRedirectService } from 'src/unified-redirect';
 
 @Controller('users')
 @Docs.controller
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly unifiedRedirect: UnifiedRedirectService,
+  ) {}
 
   @Docs.signupWithEmailAndPassword
   @Post('signup/combination')
@@ -98,8 +104,15 @@ export class UserController {
   @Get('login/google/redirect')
   @Docs.loginGoogleRedirect
   @Google()
-  async googleLoginRedirect(@Req() req: Request) {
-    return this.userService.loginWithGoogle((req as GoogleRequest).user);
+  async googleLoginRedirect(@Req() req: Request, @Res() res: Response) {
+    const result = await this.userService.loginWithGoogle(
+      (req as GoogleRequest).user,
+    );
+    await this.unifiedRedirect.issueTicketAndRedirect(
+      res,
+      result,
+      RegistrationMethod.GOOGLE,
+    );
   }
 
   @Patch('update')
@@ -161,5 +174,13 @@ export class UserController {
   async getMe(@Req() req: Request) {
     const user = (req as AuthorizedRequest).user;
     return this.userService.getMe(user);
+  }
+
+  @Get('login/ticket/:ticket')
+  @Docs.exchangeTicket
+  async exchangeTicket(@Param('ticket') ticket: string) {
+    if (!ticket) throw new NotFoundException('Ticket required');
+    const payload = await this.unifiedRedirect.consumeTicket(ticket);
+    return payload;
   }
 }
