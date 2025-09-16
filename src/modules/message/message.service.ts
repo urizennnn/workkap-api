@@ -4,10 +4,15 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Conversation, Message } from '@prisma/client';
+import { Conversation, Message, Prisma } from '@prisma/client';
 import { PrismaService, RedisService, WorkkapLogger } from 'src/libs';
 import { UserType } from 'src/libs/auth/jwt/jwt.service';
 import { SendMessageSchemaType } from './dto';
+
+type ParticipantIdentifier = {
+  canonical: string;
+  aliases: string[];
+};
 
 @Injectable()
 export class MessageService {
@@ -17,8 +22,211 @@ export class MessageService {
     private readonly redis: RedisService,
   ) {}
 
-  private sortPair(a: string, b: string): { aId: string; bId: string } {
-    return a < b ? { aId: a, bId: b } : { aId: b, bId: a };
+  private async resolveParticipant(
+    identifier: string,
+  ): Promise<ParticipantIdentifier> {
+    const aliasSet = new Set<string>();
+    aliasSet.add(identifier);
+
+    let canonical = identifier;
+
+    const [user, client, freelancer] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: identifier },
+        select: { id: true },
+      }),
+      this.prisma.client.findFirst({
+        where: { OR: [{ id: identifier }, { uid: identifier }] },
+        select: { id: true, uid: true },
+      }),
+      this.prisma.freelancer.findFirst({
+        where: { OR: [{ id: identifier }, { uid: identifier }] },
+        select: { id: true, uid: true },
+      }),
+    ]);
+
+    if (client) {
+      canonical = client.uid;
+      aliasSet.add(client.id);
+      aliasSet.add(client.uid);
+    }
+
+    if (freelancer) {
+      canonical = freelancer.uid;
+      aliasSet.add(freelancer.id);
+      aliasSet.add(freelancer.uid);
+    }
+
+    if (user) {
+      canonical = user.id;
+      aliasSet.add(user.id);
+    }
+
+    return { canonical, aliases: Array.from(aliasSet) };
+  }
+
+  private sortParticipants(
+    a: ParticipantIdentifier,
+    b: ParticipantIdentifier,
+  ): [ParticipantIdentifier, ParticipantIdentifier] {
+    if (a.canonical === b.canonical) return [a, b];
+    return a.canonical < b.canonical ? [a, b] : [b, a];
+  }
+
+  private async normalizeConversationMessages(
+    conversationId: string,
+    first: ParticipantIdentifier,
+    second: ParticipantIdentifier,
+  ): Promise<void> {
+    try {
+      await Promise.all([
+        this.prisma.message.updateMany({
+          where: {
+            conversationId,
+            senderId: { in: first.aliases },
+          },
+          data: { senderId: first.canonical },
+        }),
+        this.prisma.message.updateMany({
+          where: {
+            conversationId,
+            senderId: { in: second.aliases },
+          },
+          data: { senderId: second.canonical },
+        }),
+        this.prisma.message.updateMany({
+          where: {
+            conversationId,
+            receiverId: { in: first.aliases },
+          },
+          data: { receiverId: first.canonical },
+        }),
+        this.prisma.message.updateMany({
+          where: {
+            conversationId,
+            receiverId: { in: second.aliases },
+          },
+          data: { receiverId: second.canonical },
+        }),
+      ]);
+    } catch (error) {
+      this.logger.error(
+        'Failed to normalize conversation "%s" participants',
+        conversationId,
+        error,
+      );
+    }
+  }
+
+  private async cleanupDuplicateConversations(
+    canonical: Conversation,
+    first: ParticipantIdentifier,
+    second: ParticipantIdentifier,
+  ): Promise<void> {
+    try {
+      const duplicates = await this.prisma.conversation.findMany({
+        where: {
+          id: { not: canonical.id },
+          OR: [
+            {
+              AND: [
+                { aId: { in: first.aliases } },
+                { bId: { in: second.aliases } },
+              ],
+            },
+            {
+              AND: [
+                { aId: { in: second.aliases } },
+                { bId: { in: first.aliases } },
+              ],
+            },
+          ],
+        },
+      });
+
+      if (!duplicates.length) {
+        await this.normalizeConversationMessages(canonical.id, first, second);
+        return;
+      }
+
+      for (const duplicate of duplicates) {
+        await this.prisma.$transaction([
+          this.prisma.message.updateMany({
+            where: { conversationId: duplicate.id },
+            data: { conversationId: canonical.id },
+          }),
+          this.prisma.conversation.delete({ where: { id: duplicate.id } }),
+        ]);
+      }
+
+      await this.normalizeConversationMessages(canonical.id, first, second);
+    } catch (error) {
+      this.logger.error(
+        'Failed cleaning duplicate conversations for "%s" and "%s"',
+        first.canonical,
+        second.canonical,
+        error,
+      );
+    }
+  }
+
+  private async findConversationWithAliases(
+    participantA: ParticipantIdentifier,
+    participantB: ParticipantIdentifier,
+  ): Promise<{
+    conversation: Conversation | null;
+    sorted: [ParticipantIdentifier, ParticipantIdentifier];
+  }> {
+    const [first, second] = this.sortParticipants(participantA, participantB);
+
+    let conversation = await this.prisma.conversation.findFirst({
+      where: { aId: first.canonical, bId: second.canonical },
+    });
+
+    if (conversation) return { conversation, sorted: [first, second] };
+
+    const fallback = await this.prisma.conversation.findFirst({
+      where: {
+        OR: [
+          {
+            AND: [
+              { aId: { in: first.aliases } },
+              { bId: { in: second.aliases } },
+            ],
+          },
+          {
+            AND: [
+              { aId: { in: second.aliases } },
+              { bId: { in: first.aliases } },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (!fallback) return { conversation: null, sorted: [first, second] };
+
+    try {
+      conversation = await this.prisma.conversation.update({
+        where: { id: fallback.id },
+        data: { aId: first.canonical, bId: second.canonical },
+      });
+      await this.normalizeConversationMessages(conversation.id, first, second);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        conversation = await this.prisma.conversation.findFirst({
+          where: { aId: first.canonical, bId: second.canonical },
+        });
+        if (!conversation) throw error;
+      } else {
+        throw error;
+      }
+    }
+
+    return { conversation, sorted: [first, second] };
   }
 
   async getOrCreateConversation(
@@ -26,14 +234,40 @@ export class MessageService {
     userB: string,
     topic?: string | null,
   ): Promise<Conversation> {
-    const { aId, bId } = this.sortPair(userA, userB);
-    const existing = await this.prisma.conversation.findFirst({
-      where: { aId, bId },
-    });
-    if (existing) return existing;
-    return this.prisma.conversation.create({
-      data: { aId, bId, topic: topic ?? undefined },
-    });
+    const [participantA, participantB] = await Promise.all([
+      this.resolveParticipant(userA),
+      this.resolveParticipant(userB),
+    ]);
+
+    const {
+      conversation,
+      sorted: [first, second],
+    } = await this.findConversationWithAliases(participantA, participantB);
+
+    let canonicalConversation = conversation;
+
+    if (!canonicalConversation) {
+      canonicalConversation = await this.prisma.conversation.create({
+        data: {
+          aId: first.canonical,
+          bId: second.canonical,
+          topic: topic ?? undefined,
+        },
+      });
+    } else if (topic && !canonicalConversation.topic) {
+      canonicalConversation = await this.prisma.conversation.update({
+        where: { id: canonicalConversation.id },
+        data: { topic },
+      });
+    }
+
+    await this.cleanupDuplicateConversations(
+      canonicalConversation,
+      first,
+      second,
+    );
+
+    return canonicalConversation;
   }
 
   async getConversationById(id: string): Promise<Conversation> {
@@ -93,10 +327,14 @@ export class MessageService {
     conversationId: string;
   }> {
     try {
-      const conversation = await this.getOrCreateConversation(selfId, otherId);
+      const selfParticipant = await this.resolveParticipant(selfId);
+      const conversation = await this.getOrCreateConversation(
+        selfParticipant.canonical,
+        otherId,
+      );
       const result = await this.getConversationMessages(
         conversation.id,
-        selfId,
+        selfParticipant.canonical,
         opts,
         viewerType,
       );
@@ -189,12 +427,27 @@ export class MessageService {
     selfId: string,
     otherId: string,
   ): Promise<void> {
-    const { aId, bId } = this.sortPair(selfId, otherId);
-    const conv = await this.prisma.conversation.findFirst({
-      where: { aId, bId },
-    });
-    if (!conv) return;
-    await this.markMessagesAsReadForConversation(conv.id, selfId);
+    const [selfParticipant, otherParticipant] = await Promise.all([
+      this.resolveParticipant(selfId),
+      this.resolveParticipant(otherId),
+    ]);
+
+    const {
+      conversation,
+      sorted: [first, second],
+    } = await this.findConversationWithAliases(
+      selfParticipant,
+      otherParticipant,
+    );
+
+    if (!conversation) return;
+
+    await this.cleanupDuplicateConversations(conversation, first, second);
+
+    await this.markMessagesAsReadForConversation(
+      conversation.id,
+      selfParticipant.canonical,
+    );
   }
 
   async markMessagesAsReadForConversation(
@@ -305,7 +558,8 @@ export class MessageService {
             }
           }
           const unreadCount = unreadMap.get(c.id) ?? 0;
-          const lastActivityAt = lastMessage?.createdAt ?? c.updatedAt ?? c.createdAt;
+          const lastActivityAt =
+            lastMessage?.createdAt ?? c.updatedAt ?? c.createdAt;
           return {
             id: c.id,
             topic: c.topic ?? null,
