@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Param } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Request } from 'express';
 import { CreateOrderSchema, CreateOrderSchemaType } from './dto';
@@ -13,6 +13,22 @@ import {
 @OrderDocs.controller
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
+
+  @OrderDocs.getOrders
+  @Get()
+  @NeedsClientAuth()
+  async getOrders(@Req() req: Request) {
+    const user = req.user as JwtPayload;
+    return this.orderService.getOrders(user.userId);
+  }
+
+  @OrderDocs.getOpenOrders
+  @Get('open')
+  @NeedsClientAuth()
+  async getOpenOrders(@Req() req: Request) {
+    const user = req.user as JwtPayload;
+    return this.orderService.getOpenOrders(user.userId);
+  }
 
   @OrderDocs.createOrder
   @Post('create')
@@ -33,4 +49,3 @@ export class OrderController {
     return this.orderService.payFreelancer(orderId, user.userId);
   }
 }
-

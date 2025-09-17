@@ -37,7 +37,7 @@ export class AppConfigSchema {
 
   @Expose({ name: 'JWT_EXPIRES_IN' })
   @IsString()
-  jwt_expires_in!: string;
+  jwt_expires_in: string = '1d';
 
   @Expose({ name: 'APP_NAME' })
   @IsOptional()
@@ -56,7 +56,27 @@ export class AppConfigSchema {
 
   @Expose({ name: 'JWT_REFRESH_EXPIRES_IN' })
   @IsString()
-  jwt_refresh_expires_in!: string;
+  jwt_refresh_expires_in: string = '90d';
+
+  @Expose({ name: 'JWT_CLIENT_EXPIRES_IN' })
+  @IsOptional()
+  @IsString()
+  jwt_client_expires_in?: string;
+
+  @Expose({ name: 'JWT_FREELANCER_EXPIRES_IN' })
+  @IsOptional()
+  @IsString()
+  jwt_freelancer_expires_in?: string;
+
+  @Expose({ name: 'JWT_CLIENT_REFRESH_EXPIRES_IN' })
+  @IsOptional()
+  @IsString()
+  jwt_client_refresh_expires_in?: string;
+
+  @Expose({ name: 'JWT_FREELANCER_REFRESH_EXPIRES_IN' })
+  @IsOptional()
+  @IsString()
+  jwt_freelancer_refresh_expires_in?: string;
 
   @Expose({ name: 'GOOGLE_CLIENT_ID' })
   @IsString()

@@ -6,7 +6,7 @@ import {
 import { CreateOrderSchemaType } from './dto';
 import { PrismaService, WorkkapLogger, PaymentService } from 'src/libs';
 import { MessageService } from '../../../message/message.service';
-import { Order, PaymentMethod } from '@prisma/client';
+import { Order, OrderStatus, PaymentMethod, Prisma } from '@prisma/client';
 import { PaystackInitializeResponse } from 'src/libs/paystack/types';
 
 @Injectable()
@@ -17,6 +17,55 @@ export class OrderService {
     private readonly messageService: MessageService,
     private readonly paymentService: PaymentService,
   ) {}
+
+  private readonly orderInclude: Prisma.OrderInclude = {
+    freelancer: {
+      include: {
+        user: true,
+      },
+    },
+    gig: true,
+    modeOfWorking: {
+      include: {
+        hourlyRate: true,
+        contract: true,
+      },
+    },
+    payments: true,
+  };
+
+  private async getClientOrThrow(userId: string) {
+    const client = await this.prisma.client.findUnique({
+      where: { uid: userId },
+    });
+    if (!client) {
+      throw new NotFoundException('Client not found');
+    }
+    return client;
+  }
+
+  async getOrders(userId: string) {
+    const client = await this.getClientOrThrow(userId);
+    return this.prisma.order.findMany({
+      where: { clientId: client.id },
+      include: this.orderInclude,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getOpenOrders(userId: string) {
+    const client = await this.getClientOrThrow(userId);
+    return this.prisma.order.findMany({
+      where: {
+        clientId: client.id,
+        status: {
+          in: [OrderStatus.ACTIVE, OrderStatus.PENDING, OrderStatus.LATE],
+        },
+      },
+      include: this.orderInclude,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
   async createOrder(
     orderData: CreateOrderSchemaType,
@@ -120,4 +169,3 @@ export class OrderService {
     return payment;
   }
 }
-

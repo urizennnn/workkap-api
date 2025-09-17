@@ -16,6 +16,50 @@ import { errorSchema } from './error-schema';
 export const OrderControllerSwagger = {
   controller: applyDecorators(ApiTags('Orders')),
 
+  getOrders: applyDecorators(
+    ApiOperation({
+      summary: 'List all jobs created by the authenticated client',
+      description: 'GET /api/workspace/client/order',
+    }),
+    ApiOkResponse({
+      description: 'Orders for the client',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'array', items: { type: 'object' } },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+  ),
+
+  getOpenOrders: applyDecorators(
+    ApiOperation({
+      summary: 'List open jobs for the authenticated client',
+      description: 'GET /api/workspace/client/order/open',
+    }),
+    ApiOkResponse({
+      description: 'Open orders for the client',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          message: { type: 'string', example: 'Request successful' },
+          data: { type: 'array', items: { type: 'object' } },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Unauthorized',
+      schema: errorSchema('Unauthorized'),
+    }),
+  ),
+
   createOrder: applyDecorators(
     ApiOperation({
       summary: 'Create a new order',
@@ -112,4 +156,3 @@ export const OrderControllerSwagger = {
     ApiParam({ name: 'orderId', description: 'Order ID to pay for' }),
   ),
 };
-

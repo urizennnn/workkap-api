@@ -150,18 +150,6 @@ export class UserController {
     return this.userService.verifyToken(token);
   }
 
-  @Get(':id')
-  @Docs.getUserById
-  async getUser(@Param('id') id: string) {
-    return this.userService.getUserById(id);
-  }
-
-  @Patch(':id')
-  @Docs.patchUser
-  async patchUser(@Param('id') id: string, @Body() body: Partial<UpdateUser>) {
-    return this.userService.patchUser(id, body);
-  }
-
   @Post('refresh-token')
   @ValidateSchema({ body: RefreshTokenSchema })
   @Docs.refreshToken
@@ -174,6 +162,18 @@ export class UserController {
   async getMe(@Req() req: Request) {
     const user = (req as AuthorizedRequest).user;
     return this.userService.getMe(user);
+  }
+
+  @Get(':id')
+  @Docs.getUserById
+  async getUser(@Param('id') id: string) {
+    return this.userService.getUserById(id);
+  }
+
+  @Patch(':id')
+  @Docs.patchUser
+  async patchUser(@Param('id') id: string, @Body() body: Partial<UpdateUser>) {
+    return this.userService.patchUser(id, body);
   }
 
   @Get('login/ticket/:ticket')
