@@ -30,10 +30,9 @@ export class UnifiedRedirectService {
   ): Promise<void> {
     try {
       const ticket = uuid();
-      // Short TTL to reduce risk if leaked
-      const ttlSeconds = 60; // seconds
+      const ttlSeconds = 60; 
 
-      await this.cache.set(`ticket:${ticket}`, payload, ttlSeconds);
+      await this.cache.set(`ticket:${ticket}`, payload, ttlSeconds * 1000);
 
       const base = pickFrom(this.cfg, 'client_base_url', 'app').replace(
         /\/+$/,
