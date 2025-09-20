@@ -277,14 +277,32 @@ export class MessageService {
     let canonicalConversation = conversation;
 
     if (!canonicalConversation) {
-      canonicalConversation = await this.prisma.conversation.create({
-        data: {
-          aId: first.canonical,
-          bId: second.canonical,
-          topic: topic ?? undefined,
-          contextKey: resolvedContextKey,
-        },
-      });
+      try {
+        canonicalConversation = await this.prisma.conversation.create({
+          data: {
+            aId: first.canonical,
+            bId: second.canonical,
+            topic: topic ?? undefined,
+            contextKey: resolvedContextKey,
+          },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          canonicalConversation = await this.prisma.conversation.findFirst({
+            where: {
+              aId: first.canonical,
+              bId: second.canonical,
+              contextKey: resolvedContextKey,
+            },
+          });
+          if (!canonicalConversation) throw error;
+        } else {
+          throw error;
+        }
+      }
     } else {
       const updates: Prisma.ConversationUpdateInput = {};
       if (topic && !canonicalConversation.topic) {
