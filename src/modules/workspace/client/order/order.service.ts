@@ -128,6 +128,7 @@ export class OrderService {
           userId,
           freelancer.uid,
           gig.title,
+          `order:${order.id}`,
         );
       }
       return { order };

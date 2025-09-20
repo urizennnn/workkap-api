@@ -27,6 +27,7 @@ export class MessageController {
     @Query('page') pageQ?: string,
     @Query('limit') limitQ?: string,
     @Query('markRead') markReadQ?: string,
+    @Query('contextKey') contextKeyQ?: string,
   ) {
     try {
       const userId =
@@ -49,12 +50,20 @@ export class MessageController {
       }
 
       const markRead = markReadQ === undefined ? true : markReadQ !== 'false';
+      const contextKey = contextKeyQ?.trim()
+        ? contextKeyQ.trim().slice(0, 120)
+        : undefined;
 
       const userType =
         req.user && typeof req.user === 'object'
           ? ((req.user as any).userType ?? undefined)
           : undefined;
-      return this.messageService.getConversationBetweenUsers(userId, otherUserId, { page, limit, markRead }, userType);
+      return this.messageService.getConversationBetweenUsers(
+        userId,
+        otherUserId,
+        { page, limit, markRead, contextKey },
+        userType,
+      );
     } catch {
       throw new BadRequestException('Invalid request');
     }

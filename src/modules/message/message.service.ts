@@ -22,6 +22,13 @@ export class MessageService {
     private readonly redis: RedisService,
   ) {}
 
+  private readonly DEFAULT_CONTEXT_KEY = 'default';
+
+  private resolveContextKey(contextKey?: string | null): string {
+    const trimmed = contextKey?.trim();
+    return trimmed && trimmed.length ? trimmed : this.DEFAULT_CONTEXT_KEY;
+  }
+
   private async resolveParticipant(
     identifier: string,
   ): Promise<ParticipantIdentifier> {
@@ -122,11 +129,13 @@ export class MessageService {
     canonical: Conversation,
     first: ParticipantIdentifier,
     second: ParticipantIdentifier,
+    contextKey: string,
   ): Promise<void> {
     try {
       const duplicates = await this.prisma.conversation.findMany({
         where: {
           id: { not: canonical.id },
+          contextKey,
           OR: [
             {
               AND: [
@@ -173,6 +182,7 @@ export class MessageService {
   private async findConversationWithAliases(
     participantA: ParticipantIdentifier,
     participantB: ParticipantIdentifier,
+    contextKey: string,
   ): Promise<{
     conversation: Conversation | null;
     sorted: [ParticipantIdentifier, ParticipantIdentifier];
@@ -180,7 +190,11 @@ export class MessageService {
     const [first, second] = this.sortParticipants(participantA, participantB);
 
     let conversation = await this.prisma.conversation.findFirst({
-      where: { aId: first.canonical, bId: second.canonical },
+      where: {
+        aId: first.canonical,
+        bId: second.canonical,
+        contextKey,
+      },
     });
 
     if (conversation) return { conversation, sorted: [first, second] };
@@ -192,12 +206,14 @@ export class MessageService {
             AND: [
               { aId: { in: first.aliases } },
               { bId: { in: second.aliases } },
+              { contextKey },
             ],
           },
           {
             AND: [
               { aId: { in: second.aliases } },
               { bId: { in: first.aliases } },
+              { contextKey },
             ],
           },
         ],
@@ -209,7 +225,11 @@ export class MessageService {
     try {
       conversation = await this.prisma.conversation.update({
         where: { id: fallback.id },
-        data: { aId: first.canonical, bId: second.canonical },
+        data: {
+          aId: first.canonical,
+          bId: second.canonical,
+          contextKey,
+        },
       });
       await this.normalizeConversationMessages(conversation.id, first, second);
     } catch (error) {
@@ -218,7 +238,11 @@ export class MessageService {
         error.code === 'P2002'
       ) {
         conversation = await this.prisma.conversation.findFirst({
-          where: { aId: first.canonical, bId: second.canonical },
+          where: {
+            aId: first.canonical,
+            bId: second.canonical,
+            contextKey,
+          },
         });
         if (!conversation) throw error;
       } else {
@@ -233,7 +257,9 @@ export class MessageService {
     userA: string,
     userB: string,
     topic?: string | null,
+    contextKey?: string | null,
   ): Promise<Conversation> {
+    const resolvedContextKey = this.resolveContextKey(contextKey);
     const [participantA, participantB] = await Promise.all([
       this.resolveParticipant(userA),
       this.resolveParticipant(userB),
@@ -242,7 +268,11 @@ export class MessageService {
     const {
       conversation,
       sorted: [first, second],
-    } = await this.findConversationWithAliases(participantA, participantB);
+    } = await this.findConversationWithAliases(
+      participantA,
+      participantB,
+      resolvedContextKey,
+    );
 
     let canonicalConversation = conversation;
 
@@ -252,19 +282,30 @@ export class MessageService {
           aId: first.canonical,
           bId: second.canonical,
           topic: topic ?? undefined,
+          contextKey: resolvedContextKey,
         },
       });
-    } else if (topic && !canonicalConversation.topic) {
-      canonicalConversation = await this.prisma.conversation.update({
-        where: { id: canonicalConversation.id },
-        data: { topic },
-      });
+    } else {
+      const updates: Prisma.ConversationUpdateInput = {};
+      if (topic && !canonicalConversation.topic) {
+        updates.topic = topic;
+      }
+      if (canonicalConversation.contextKey !== resolvedContextKey) {
+        updates.contextKey = resolvedContextKey;
+      }
+      if (Object.keys(updates).length) {
+        canonicalConversation = await this.prisma.conversation.update({
+          where: { id: canonicalConversation.id },
+          data: updates,
+        });
+      }
     }
 
     await this.cleanupDuplicateConversations(
       canonicalConversation,
       first,
       second,
+      resolvedContextKey,
     );
 
     return canonicalConversation;
@@ -319,7 +360,12 @@ export class MessageService {
   async getConversationBetweenUsers(
     selfId: string,
     otherId: string,
-    opts?: { page?: number; limit?: number; markRead?: boolean },
+    opts?: {
+      page?: number;
+      limit?: number;
+      markRead?: boolean;
+      contextKey?: string | null;
+    },
     viewerType?: UserType,
   ): Promise<{
     messages: any[];
@@ -328,9 +374,12 @@ export class MessageService {
   }> {
     try {
       const selfParticipant = await this.resolveParticipant(selfId);
+      const resolvedContextKey = this.resolveContextKey(opts?.contextKey);
       const conversation = await this.getOrCreateConversation(
         selfParticipant.canonical,
         otherId,
+        undefined,
+        resolvedContextKey,
       );
       const result = await this.getConversationMessages(
         conversation.id,
@@ -426,23 +475,31 @@ export class MessageService {
   async markMessagesAsReadBetweenUsers(
     selfId: string,
     otherId: string,
+    contextKey?: string | null,
   ): Promise<void> {
     const [selfParticipant, otherParticipant] = await Promise.all([
       this.resolveParticipant(selfId),
       this.resolveParticipant(otherId),
     ]);
 
+    const resolvedContextKey = this.resolveContextKey(contextKey);
     const {
       conversation,
       sorted: [first, second],
     } = await this.findConversationWithAliases(
       selfParticipant,
       otherParticipant,
+      resolvedContextKey,
     );
 
     if (!conversation) return;
 
-    await this.cleanupDuplicateConversations(conversation, first, second);
+    await this.cleanupDuplicateConversations(
+      conversation,
+      first,
+      second,
+      resolvedContextKey,
+    );
 
     await this.markMessagesAsReadForConversation(
       conversation.id,
@@ -473,6 +530,7 @@ export class MessageService {
     conversations: Array<{
       id: string;
       topic: string | null;
+      contextKey: string;
       participants: { selfId: string; otherId: string };
       otherUser: {
         id: string;
@@ -563,6 +621,7 @@ export class MessageService {
           return {
             id: c.id,
             topic: c.topic ?? null,
+            contextKey: c.contextKey,
             participants: { selfId: userId, otherId },
             otherUser,
             lastMessage,

@@ -264,11 +264,12 @@ model Conversation {
   aId       String
   bId       String
   topic     String?
+  contextKey String   @default("default")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   messages  Message[]
 
-  @@unique([aId, bId], name: "pair_unique")
+  @@unique([aId, bId, contextKey], name: "pair_context_unique")
   @@map("conversations")
 }
 
