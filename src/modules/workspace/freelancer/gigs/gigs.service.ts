@@ -1,4 +1,4 @@
-import { Gig, MediaType, OrderStatus } from '@prisma/client';
+import { Gig, GigStatus, MediaType, OrderStatus } from '@prisma/client';
 import {
   Injectable,
   NotFoundException,
@@ -58,7 +58,7 @@ export class GigsService {
                 subCategory: data.subCategory,
                 tools: data.tools ?? [],
                 tags: data.tags ?? [],
-                status: data.status,
+                status: data.status ?? GigStatus.DRAFT,
                 description: data.description,
                 thirdPartyAgreement: data.thirdPartyAgreement ?? false,
                 packages: packages
