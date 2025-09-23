@@ -1,19 +1,42 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { Conversation, Message, Prisma } from '@prisma/client';
-import { validate as isUuid } from 'uuid';
 import { PrismaService, RedisService, WorkkapLogger } from 'src/libs';
 import { UserType } from 'src/libs/auth/jwt/jwt.service';
 import { SendMessageSchemaType } from './dto';
+import { isValidUuid } from './message.utils';
 
 type ParticipantIdentifier = {
   canonical: string;
   aliases: string[];
+  exists: boolean;
+  source: 'user' | 'client' | 'freelancer' | null;
 };
+
+type ConversationFetchMeta = {
+  correlationId?: string;
+  selfId: string;
+  otherId: string;
+  contextKey: string;
+  viewerType?: UserType;
+};
+
+type FetchOutcome =
+  | 'success'
+  | 'not_found'
+  | 'forbidden'
+  | 'bad_request'
+  | 'conflict'
+  | 'unavailable'
+  | 'error';
 
 @Injectable()
 export class MessageService {
@@ -24,10 +47,15 @@ export class MessageService {
   ) {}
 
   private readonly DEFAULT_CONTEXT_KEY = 'default';
+  private readonly CONTEXT_KEY_REGEX = /^[a-zA-Z0-9:_-]{1,120}$/;
 
   private resolveContextKey(contextKey?: string | null): string {
     const trimmed = contextKey?.trim();
-    return trimmed && trimmed.length ? trimmed : this.DEFAULT_CONTEXT_KEY;
+    if (!trimmed || !trimmed.length) return this.DEFAULT_CONTEXT_KEY;
+    if (!this.CONTEXT_KEY_REGEX.test(trimmed)) {
+      throw new BadRequestException('Invalid context key');
+    }
+    return trimmed;
   }
 
   private async resolveParticipant(
@@ -40,7 +68,7 @@ export class MessageService {
     aliasSet.add(normalizedIdentifier);
 
     let canonical = normalizedIdentifier;
-    const identifierIsUuid = isUuid(normalizedIdentifier);
+    const identifierIsUuid = isValidUuid(normalizedIdentifier);
 
     const [user, client, freelancer] = await Promise.all([
       identifierIsUuid
@@ -90,7 +118,12 @@ export class MessageService {
       aliasSet.add(user.id);
     }
 
-    return { canonical, aliases: Array.from(aliasSet) };
+    return {
+      canonical,
+      aliases: Array.from(aliasSet),
+      exists: Boolean(user || client || freelancer),
+      source: user ? 'user' : client ? 'client' : freelancer ? 'freelancer' : null,
+    };
   }
 
   private sortParticipants(
@@ -404,6 +437,7 @@ export class MessageService {
       limit?: number;
       markRead?: boolean;
       contextKey?: string | null;
+      correlationId?: string;
     },
     viewerType?: UserType,
   ): Promise<{
@@ -411,36 +445,210 @@ export class MessageService {
     unreadCount: number;
     conversationId: string;
   }> {
+    const trimmedContextKey = opts?.contextKey?.trim();
+    const meta: ConversationFetchMeta = {
+      correlationId: opts?.correlationId,
+      selfId,
+      otherId,
+      contextKey: trimmedContextKey && trimmedContextKey.length
+        ? trimmedContextKey
+        : this.DEFAULT_CONTEXT_KEY,
+      viewerType,
+    };
+    const startedAt = Date.now();
+
     try {
+      if (!isValidUuid(selfId)) {
+        throw new BadRequestException('Invalid requester id');
+      }
+
+      if (!isValidUuid(otherId)) {
+        throw new BadRequestException('Invalid participant id');
+      }
+
       const selfParticipant = await this.resolveParticipant(selfId);
+      if (!selfParticipant.exists) {
+        throw new ForbiddenException('Requester is not a valid participant');
+      }
+
+      const otherParticipant = await this.resolveParticipant(otherId);
+      if (!otherParticipant.exists) {
+        throw new NotFoundException('Conversation participant not found');
+      }
+
       const resolvedContextKey = this.resolveContextKey(opts?.contextKey);
-      const conversation = await this.getOrCreateConversation(
-        selfParticipant.canonical,
-        otherId,
-        undefined,
+      meta.contextKey = resolvedContextKey;
+
+      const {
+        conversation,
+      } = await this.findConversationWithAliases(
+        selfParticipant,
+        otherParticipant,
         resolvedContextKey,
       );
+
+      if (!conversation) {
+        throw new NotFoundException('Conversation not found');
+      }
+
+      if (
+        conversation.aId !== selfParticipant.canonical &&
+        conversation.bId !== selfParticipant.canonical
+      ) {
+        throw new ForbiddenException('Not a participant of this conversation');
+      }
+
       const result = await this.getConversationMessages(
         conversation.id,
         selfParticipant.canonical,
         opts,
         viewerType,
       );
+      const durationMs = Date.now() - startedAt;
+      this.recordFetchMetrics(durationMs, 'success', meta);
+      this.logSlowFetch(durationMs, meta);
       return { ...result, conversationId: conversation.id };
     } catch (error) {
-      if (
-        error instanceof ForbiddenException ||
-        error instanceof NotFoundException
-      )
-        throw error;
+      const durationMs = Date.now() - startedAt;
+      const httpError = this.toHttpError(error);
+      const outcome = this.classifyOutcome(httpError ?? 'error');
+      this.recordFetchMetrics(durationMs, outcome, meta, error);
+      this.logSlowFetch(durationMs, meta);
+
+      const normalizedError = this.normalizeError(error);
+
+      if (httpError) {
+        const logMethod = httpError.getStatus() >= 500
+          ? this.logger.error.bind(this.logger)
+          : this.logger.warn.bind(this.logger);
+        logMethod(
+          'Conversation fetch failed for "%s" <-> "%s" %o',
+          selfId,
+          otherId,
+          { ...meta, durationMs, error: normalizedError },
+          error instanceof Error ? error : undefined,
+        );
+        throw httpError;
+      }
+
       this.logger.error(
-        'Failed to fetch conversation for "%s" <-> "%s"',
+        'Failed to fetch conversation for "%s" <-> "%s" %o',
         selfId,
         otherId,
-        error,
+        { ...meta, durationMs, error: normalizedError },
+        error instanceof Error ? error : undefined,
       );
       throw new InternalServerErrorException('Unable to fetch messages');
     }
+  }
+
+  private classifyOutcome(error: HttpException | FetchOutcome): FetchOutcome {
+    if (typeof error === 'string') return error;
+    const status = error.getStatus();
+    if (status === 400) return 'bad_request';
+    if (status === 403) return 'forbidden';
+    if (status === 404) return 'not_found';
+    if (status === 409) return 'conflict';
+    if (status === 503) return 'unavailable';
+    if (status >= 200 && status < 300) return 'success';
+    return 'error';
+  }
+
+  private recordFetchMetrics(
+    durationMs: number,
+    outcome: FetchOutcome,
+    meta: ConversationFetchMeta,
+    error?: unknown,
+  ): void {
+    this.logger.info('metric messages.fetch.duration_ms %o', {
+      durationMs,
+      outcome,
+      correlationId: meta.correlationId ?? null,
+      selfId: meta.selfId,
+      otherId: meta.otherId,
+      contextKey: meta.contextKey,
+      viewerType: meta.viewerType ?? null,
+    });
+
+    if (outcome !== 'success') {
+      this.logger.info('metric messages.fetch.errors_total %o', {
+        outcome,
+        correlationId: meta.correlationId ?? null,
+        selfId: meta.selfId,
+        otherId: meta.otherId,
+        contextKey: meta.contextKey,
+        viewerType: meta.viewerType ?? null,
+        error: this.normalizeError(error),
+      });
+    }
+  }
+
+  private logSlowFetch(durationMs: number, meta: ConversationFetchMeta): void {
+    if (durationMs <= 1000) return;
+    this.logger.warn('Slow conversation fetch detected %o', {
+      durationMs,
+      correlationId: meta.correlationId ?? null,
+      selfId: meta.selfId,
+      otherId: meta.otherId,
+      contextKey: meta.contextKey,
+      viewerType: meta.viewerType ?? null,
+    });
+  }
+
+  private normalizeError(error: unknown): Record<string, unknown> {
+    if (error instanceof Error) {
+      const base: Record<string, unknown> = {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      };
+      if ('code' in error) {
+        base.code = (error as any).code;
+      }
+      if ('cause' in error) {
+        base.cause = (error as any).cause;
+      }
+      return base;
+    }
+
+    if (typeof error === 'object' && error !== null) {
+      return { ...error } as Record<string, unknown>;
+    }
+
+    return { name: 'UnknownError', message: String(error) };
+  }
+
+  private toHttpError(error: unknown): HttpException | null {
+    if (error instanceof HttpException) {
+      return error;
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      switch (error.code) {
+        case 'P2002':
+          return new ConflictException('Conversation already exists');
+        case 'P2003':
+          return new BadRequestException('Invalid conversation relation');
+        case 'P2025':
+          return new NotFoundException('Conversation not found');
+        default:
+          return null;
+      }
+    }
+
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      return new BadRequestException('Invalid request payload');
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientInitializationError ||
+      error instanceof Prisma.PrismaClientRustPanicError ||
+      error instanceof Prisma.PrismaClientUnknownRequestError
+    ) {
+      return new ServiceUnavailableException('Database temporarily unavailable');
+    }
+
+    return null;
   }
 
   async getConversationMessages(
