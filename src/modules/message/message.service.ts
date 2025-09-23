@@ -357,6 +357,26 @@ export class MessageService {
               contextKey: resolvedContextKey,
             },
           });
+          if (!canonicalConversation) {
+            canonicalConversation = await this.prisma.conversation.findFirst({
+              where: {
+                OR: [
+                  {
+                    AND: [
+                      { aId: { in: first.aliases } },
+                      { bId: { in: second.aliases } },
+                    ],
+                  },
+                  {
+                    AND: [
+                      { aId: { in: second.aliases } },
+                      { bId: { in: first.aliases } },
+                    ],
+                  },
+                ],
+              },
+            });
+          }
           if (!canonicalConversation) throw error;
         } else {
           throw error;
@@ -382,7 +402,7 @@ export class MessageService {
       canonicalConversation,
       first,
       second,
-      resolvedContextKey,
+      canonicalConversation.contextKey,
     );
 
     return canonicalConversation;
