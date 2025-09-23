@@ -5,7 +5,12 @@ import {
   ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PrismaService, SlugService, WorkkapLogger } from 'src/libs';
+import {
+  PrismaService,
+  SlugService,
+  WorkkapLogger,
+  normalizeAndThrowHttpError,
+} from 'src/libs';
 import { GigSchemaType } from './dto';
 
 @Injectable()
@@ -114,11 +119,19 @@ export class GigsService {
       if (
         error instanceof ForbiddenException ||
         error instanceof NotFoundException
-      )
+      ) {
         throw error;
+      }
       this.logger.error(`Failed to create gig for user "${userId}"`, error);
-      console.error(error);
-      throw new InternalServerErrorException('Unable to create or update gig');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to create or update gig',
+      );
     }
   }
 
@@ -160,7 +173,15 @@ export class GigsService {
       });
     } catch (error) {
       this.logger.error(`Failed to fetch gigs for user "${userId}"`, error);
-      throw new InternalServerErrorException('Unable to fetch gigs');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to fetch gigs',
+      );
     }
   }
 
@@ -188,7 +209,15 @@ export class GigsService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to retrieve gig "${identifier}"`, error);
-      throw new InternalServerErrorException('Unable to retrieve gig');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to retrieve gig',
+      );
     }
   }
 
@@ -199,7 +228,8 @@ export class GigsService {
           where: { OR: [{ slug: identifier }, { id: identifier }] },
           select: { id: true, userId: true },
         });
-        if (!gigBasic) throw new NotFoundException(`Gig "${identifier}" not found`);
+        if (!gigBasic)
+          throw new NotFoundException(`Gig "${identifier}" not found`);
 
         const freelancer = await tx.freelancer.findUnique({
           where: { uid: userId },
@@ -212,7 +242,9 @@ export class GigsService {
         const hasPending = await tx.order.findFirst({
           where: {
             gigId: gigBasic.id,
-            status: { in: [OrderStatus.ACTIVE, OrderStatus.PENDING, OrderStatus.LATE] },
+            status: {
+              in: [OrderStatus.ACTIVE, OrderStatus.PENDING, OrderStatus.LATE],
+            },
           },
           select: { id: true, status: true },
         });
@@ -233,11 +265,19 @@ export class GigsService {
       if (
         error instanceof ForbiddenException ||
         error instanceof NotFoundException
-      )
+      ) {
         throw error;
-      console.log(error);
+      }
       this.logger.error(`Failed to delete gig "${identifier}"`, error);
-      throw new InternalServerErrorException('Unable to delete gig');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to delete gig',
+      );
     }
   }
 }

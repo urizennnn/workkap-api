@@ -4,7 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
-import { PrismaService, WorkkapLogger } from 'src/libs';
+import {
+  PrismaService,
+  WorkkapLogger,
+  normalizeAndThrowHttpError,
+} from 'src/libs';
 
 @Injectable()
 export class OrderService {
@@ -46,24 +50,47 @@ export class OrderService {
       const results = {
         active: orders
           .filter((order) => order.status === OrderStatus.ACTIVE)
-          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+          .map((order) => ({
+            ...order,
+            clientName: order.client.user.fullName,
+          })),
         late: orders
           .filter((order) => order.status === OrderStatus.LATE)
-          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+          .map((order) => ({
+            ...order,
+            clientName: order.client.user.fullName,
+          })),
         completed: orders
           .filter((order) => order.status === OrderStatus.COMPLETED)
-          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+          .map((order) => ({
+            ...order,
+            clientName: order.client.user.fullName,
+          })),
         pending: orders
           .filter((order) => order.status === OrderStatus.PENDING)
-          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+          .map((order) => ({
+            ...order,
+            clientName: order.client.user.fullName,
+          })),
         cancelled: orders
           .filter((order) => order.status === OrderStatus.CANCELLED)
-          .map((order) => ({ ...order, clientName: order.client.user.fullName })),
+          .map((order) => ({
+            ...order,
+            clientName: order.client.user.fullName,
+          })),
       };
       return results;
     } catch (error) {
       this.logger.error(`Failed to fetch orders for user "${userId}"`, error);
-      throw new InternalServerErrorException('Unable to fetch orders');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to fetch orders',
+      );
     }
   }
 }

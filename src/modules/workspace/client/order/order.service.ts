@@ -2,9 +2,15 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CreateOrderSchemaType } from './dto';
-import { PrismaService, WorkkapLogger, PaymentService } from 'src/libs';
+import {
+  PrismaService,
+  WorkkapLogger,
+  PaymentService,
+  normalizeAndThrowHttpError,
+} from 'src/libs';
 import { MessageService } from '../../../message/message.service';
 import { Order, OrderStatus, PaymentMethod, Prisma } from '@prisma/client';
 import { PaystackInitializeResponse } from 'src/libs/paystack/types';
@@ -134,7 +140,15 @@ export class OrderService {
       return { order };
     } catch (error) {
       this.logger.error(`Failed to create order for user "${userId}"`, error);
-      throw new NotFoundException('Unable to create order');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to create order',
+      );
     }
   }
 
