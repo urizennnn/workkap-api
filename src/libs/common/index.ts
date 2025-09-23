@@ -3,3 +3,4 @@ export * from './interceptor/index';
 export * from './filter/index';
 export * from './decorators/index';
 export * from './router/index';
+export * from './utils/index';

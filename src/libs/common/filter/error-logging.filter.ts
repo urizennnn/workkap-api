@@ -21,21 +21,38 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
-      exception instanceof HttpException
-        ? exception.message
-        : 'Internal server error';
+    const exceptionResponse =
+      exception instanceof HttpException ? exception.getResponse() : null;
 
-    this.logger.debug('Exception caught by filter:', exception);
-    this.logger.error(
-      `[Error] ${request.method} ${request.url} - ${status} - ${message}`,
-    );
-
-    response.status(status).json({
+    const responseBody: Record<string, unknown> = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message,
-    });
+    };
+
+    if (typeof exceptionResponse === 'string') {
+      responseBody.message = exceptionResponse;
+    } else if (exceptionResponse && typeof exceptionResponse === 'object') {
+      Object.assign(responseBody, exceptionResponse);
+    } else if (exception instanceof Error) {
+      responseBody.message = exception.message;
+      responseBody.error = exception.name;
+    } else {
+      responseBody.message = 'Internal server error';
+    }
+
+    if (!('message' in responseBody) || !responseBody.message) {
+      responseBody.message = 'Internal server error';
+    }
+
+    this.logger.debug('Exception caught by filter:', exception);
+    this.logger.error(
+      `[Error] ${request.method} ${request.url} - ${status} - ${String(
+        responseBody.message,
+      )}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
+
+    response.status(status).json(responseBody);
   }
 }

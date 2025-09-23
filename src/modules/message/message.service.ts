@@ -9,7 +9,12 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Conversation, Message, Prisma } from '@prisma/client';
-import { PrismaService, RedisService, WorkkapLogger } from 'src/libs';
+import {
+  PrismaService,
+  RedisService,
+  WorkkapLogger,
+  normalizeAndThrowHttpError,
+} from 'src/libs';
 import { UserType } from 'src/libs/auth/jwt/jwt.service';
 import { SendMessageSchemaType } from './dto';
 import { isValidUuid } from './message.utils';
@@ -80,10 +85,7 @@ export class MessageService {
       identifierIsUuid
         ? this.prisma.client.findFirst({
             where: {
-              OR: [
-                { id: normalizedIdentifier },
-                { uid: normalizedIdentifier },
-              ],
+              OR: [{ id: normalizedIdentifier }, { uid: normalizedIdentifier }],
             },
             select: { id: true, uid: true },
           })
@@ -91,10 +93,7 @@ export class MessageService {
       identifierIsUuid
         ? this.prisma.freelancer.findFirst({
             where: {
-              OR: [
-                { id: normalizedIdentifier },
-                { uid: normalizedIdentifier },
-              ],
+              OR: [{ id: normalizedIdentifier }, { uid: normalizedIdentifier }],
             },
             select: { id: true, uid: true },
           })
@@ -122,7 +121,13 @@ export class MessageService {
       canonical,
       aliases: Array.from(aliasSet),
       exists: Boolean(user || client || freelancer),
-      source: user ? 'user' : client ? 'client' : freelancer ? 'freelancer' : null,
+      source: user
+        ? 'user'
+        : client
+          ? 'client'
+          : freelancer
+            ? 'freelancer'
+            : null,
     };
   }
 
@@ -450,9 +455,10 @@ export class MessageService {
       correlationId: opts?.correlationId,
       selfId,
       otherId,
-      contextKey: trimmedContextKey && trimmedContextKey.length
-        ? trimmedContextKey
-        : this.DEFAULT_CONTEXT_KEY,
+      contextKey:
+        trimmedContextKey && trimmedContextKey.length
+          ? trimmedContextKey
+          : this.DEFAULT_CONTEXT_KEY,
       viewerType,
     };
     const startedAt = Date.now();
@@ -479,9 +485,7 @@ export class MessageService {
       const resolvedContextKey = this.resolveContextKey(opts?.contextKey);
       meta.contextKey = resolvedContextKey;
 
-      const {
-        conversation,
-      } = await this.findConversationWithAliases(
+      const { conversation } = await this.findConversationWithAliases(
         selfParticipant,
         otherParticipant,
         resolvedContextKey,
@@ -518,9 +522,10 @@ export class MessageService {
       const normalizedError = this.normalizeError(error);
 
       if (httpError) {
-        const logMethod = httpError.getStatus() >= 500
-          ? this.logger.error.bind(this.logger)
-          : this.logger.warn.bind(this.logger);
+        const logMethod =
+          httpError.getStatus() >= 500
+            ? this.logger.error.bind(this.logger)
+            : this.logger.warn.bind(this.logger);
         logMethod(
           'Conversation fetch failed for "%s" <-> "%s" %o',
           selfId,
@@ -538,7 +543,15 @@ export class MessageService {
         { ...meta, durationMs, error: normalizedError },
         error instanceof Error ? error : undefined,
       );
-      throw new InternalServerErrorException('Unable to fetch messages');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to fetch messages',
+      );
     }
   }
 
@@ -645,7 +658,9 @@ export class MessageService {
       error instanceof Prisma.PrismaClientRustPanicError ||
       error instanceof Prisma.PrismaClientUnknownRequestError
     ) {
-      return new ServiceUnavailableException('Database temporarily unavailable');
+      return new ServiceUnavailableException(
+        'Database temporarily unavailable',
+      );
     }
 
     return null;
@@ -709,13 +724,20 @@ export class MessageService {
       const unreadCount = await this.countUnreadMessages(userId);
       return { messages: parsedMessages, unreadCount };
     } catch (error) {
-      if (error instanceof ForbiddenException) throw error;
       this.logger.error(
         'Failed to fetch messages for conversation "%s"',
         conversationId,
         error,
       );
-      throw new InternalServerErrorException('Unable to fetch messages');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to fetch messages',
+      );
     }
   }
 
@@ -892,7 +914,15 @@ export class MessageService {
         userId,
         error,
       );
-      throw new InternalServerErrorException('Unable to list conversations');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Unable to list conversations',
+      );
     }
   }
 }

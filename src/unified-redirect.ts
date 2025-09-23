@@ -9,7 +9,7 @@ import { Response } from 'express';
 import { RegistrationMethod } from '@prisma/client';
 import { pickFrom } from './libs';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from 'src/libs';
+import { RedisService, normalizeAndThrowHttpError } from 'src/libs';
 
 @Injectable()
 export class UnifiedRedirectService {
@@ -49,7 +49,15 @@ export class UnifiedRedirectService {
       res.redirect(302, url.toString());
     } catch (err) {
       this.logger.error('Failed to issue ticket redirect', err);
-      throw new InternalServerErrorException('Failed to issue ticket redirect');
+      normalizeAndThrowHttpError(
+        err,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Failed to issue ticket redirect',
+      );
     }
   }
 

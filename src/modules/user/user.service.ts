@@ -33,6 +33,7 @@ import {
   SengridService,
   RedisService,
   PaymentService,
+  normalizeAndThrowHttpError,
 } from 'src/libs';
 import { PaystackInitializeResponse } from 'src/libs/paystack/types';
 
@@ -59,7 +60,12 @@ export class UserService {
       return { status: 'success', data: payload };
     } catch (error: unknown) {
       this.logger.error('Failed to verify token', error);
-      throw new UnauthorizedException('Invalid or expired token');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new UnauthorizedException(message, cause ? { cause } : undefined),
+        'Invalid or expired token',
+      );
     }
   }
 
@@ -102,10 +108,15 @@ export class UserService {
       ) {
         throw new ConflictException('Email or username already exists');
       }
-      if (error instanceof Error) {
-        console.log(JSON.stringify(error.message));
-      }
-      throw new InternalServerErrorException('Failed to create user');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Failed to create user',
+      );
     }
   }
 
@@ -165,18 +176,19 @@ export class UserService {
         data: { user, tokens: { accessToken, refreshToken } },
       };
     } catch (error: unknown) {
-      console.log(error);
       this.logger.error(
         `Error logging in user with email: ${payload.email}`,
         error,
       );
-      if (
-        error instanceof UnauthorizedException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to login user');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Failed to login user',
+      );
     }
   }
 
@@ -231,11 +243,15 @@ export class UserService {
       };
     } catch (error: unknown) {
       this.logger.error('Error logging in with Google', error);
-      console.log(error);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to login user');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Failed to login user',
+      );
     }
   }
 
@@ -317,14 +333,15 @@ export class UserService {
           throw new NotFoundException('User not found');
         }
       }
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException ||
-        error instanceof ConflictException
-      ) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to update user details');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Failed to update user details',
+      );
     }
   }
 
@@ -366,7 +383,15 @@ export class UserService {
       ) {
         throw new NotFoundException('User not found');
       }
-      throw new InternalServerErrorException('Failed to update user profile');
+      normalizeAndThrowHttpError(
+        error,
+        (message, cause) =>
+          new InternalServerErrorException(
+            message,
+            cause ? { cause } : undefined,
+          ),
+        'Failed to update user profile',
+      );
     }
   }
 
@@ -494,13 +519,19 @@ export class UserService {
   }
 
   async getMe(payload: JwtPayload): Promise<{ status: 'success'; data: any }> {
-    const base = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    const base = await this.prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
     if (!base) throw new NotFoundException('User not found');
     if (payload.userType === UserType.CLIENT) {
-      const client = await this.prisma.client.findUnique({ where: { uid: base.id } });
+      const client = await this.prisma.client.findUnique({
+        where: { uid: base.id },
+      });
       return { status: 'success', data: { user: base, client } };
     }
-    const freelancer = await this.prisma.freelancer.findUnique({ where: { uid: base.id } });
+    const freelancer = await this.prisma.freelancer.findUnique({
+      where: { uid: base.id },
+    });
     return { status: 'success', data: { user: base, freelancer } };
   }
 }
