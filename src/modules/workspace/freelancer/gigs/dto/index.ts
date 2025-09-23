@@ -3,7 +3,7 @@ import * as v from 'valibot';
 
 export const GigSchema = v.object({
   slug: v.optional(v.string()),
-  status: v.pipe(v.enum(GigStatus, 'Invalid gig status')),
+  status: v.pipe(v.optional(v.enum(GigStatus, 'Invalid gig status'))),
   title: v.string(),
   mainCategory: v.string(),
   subCategory: v.string(),

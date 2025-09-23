@@ -58,7 +58,7 @@ export class GigsService {
                 subCategory: data.subCategory,
                 tools: data.tools ?? [],
                 tags: data.tags ?? [],
-                status: data.status ?? GigStatus.DRAFT,
+                status: data.status || GigStatus.DRAFT,
                 description: data.description,
                 thirdPartyAgreement: data.thirdPartyAgreement ?? false,
                 packages: packages

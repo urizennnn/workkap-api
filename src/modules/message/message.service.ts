@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Conversation, Message, Prisma } from '@prisma/client';
+import { validate as isUuid } from 'uuid';
 import { PrismaService, RedisService, WorkkapLogger } from 'src/libs';
 import { UserType } from 'src/libs/auth/jwt/jwt.service';
 import { SendMessageSchemaType } from './dto';
@@ -35,21 +36,41 @@ export class MessageService {
     const aliasSet = new Set<string>();
     aliasSet.add(identifier);
 
-    let canonical = identifier;
+    const normalizedIdentifier = identifier.trim();
+    aliasSet.add(normalizedIdentifier);
+
+    let canonical = normalizedIdentifier;
+    const identifierIsUuid = isUuid(normalizedIdentifier);
 
     const [user, client, freelancer] = await Promise.all([
-      this.prisma.user.findUnique({
-        where: { id: identifier },
-        select: { id: true },
-      }),
-      this.prisma.client.findFirst({
-        where: { OR: [{ id: identifier }, { uid: identifier }] },
-        select: { id: true, uid: true },
-      }),
-      this.prisma.freelancer.findFirst({
-        where: { OR: [{ id: identifier }, { uid: identifier }] },
-        select: { id: true, uid: true },
-      }),
+      identifierIsUuid
+        ? this.prisma.user.findUnique({
+            where: { id: normalizedIdentifier },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      identifierIsUuid
+        ? this.prisma.client.findFirst({
+            where: {
+              OR: [
+                { id: normalizedIdentifier },
+                { uid: normalizedIdentifier },
+              ],
+            },
+            select: { id: true, uid: true },
+          })
+        : Promise.resolve(null),
+      identifierIsUuid
+        ? this.prisma.freelancer.findFirst({
+            where: {
+              OR: [
+                { id: normalizedIdentifier },
+                { uid: normalizedIdentifier },
+              ],
+            },
+            select: { id: true, uid: true },
+          })
+        : Promise.resolve(null),
     ]);
 
     if (client) {
