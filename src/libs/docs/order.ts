@@ -9,12 +9,13 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiNotFoundResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { PaymentMethod } from '@prisma/client';
 import { errorSchema } from './error-schema';
 
 export const OrderControllerSwagger = {
-  controller: applyDecorators(ApiTags('Orders')),
+  controller: applyDecorators(ApiTags('Orders'), ApiBearerAuth()),
 
   getOrders: applyDecorators(
     ApiOperation({

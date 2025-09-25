@@ -1,8 +1,15 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 export const SocketDocs = {
-  controller: applyDecorators(ApiTags('Sockets')),
+  controller: applyDecorators(ApiTags('Sockets'), ApiBearerAuth()),
 
   sendMessage: applyDecorators(
     ApiOperation({
@@ -33,6 +40,20 @@ export const SocketDocs = {
         required: ['conversationId'],
       },
     }),
+    ApiOkResponse({
+      description: 'Message created',
+      schema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          conversationId: { type: 'string' },
+          content: { type: 'string', nullable: true },
+          senderId: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   ),
 
   readMessages: applyDecorators(
@@ -51,6 +72,15 @@ export const SocketDocs = {
         required: ['conversationId'],
       },
     }),
+    ApiOkResponse({
+      description: 'Unread count after marking as read',
+      schema: {
+        type: 'object',
+        properties: {
+          unreadCount: { type: 'number', example: 0 },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   ),
 } as const;
-

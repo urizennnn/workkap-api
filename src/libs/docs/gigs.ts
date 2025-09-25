@@ -9,12 +9,13 @@ import {
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { GigStatus } from '@prisma/client';
 import { errorSchema } from './error-schema';
 
 export const GigsControllerSwagger = {
-  controller: applyDecorators(ApiTags('Gigs')),
+  controller: applyDecorators(ApiTags('Gigs'), ApiBearerAuth()),
 
   createGig: applyDecorators(
     ApiOperation({ summary: 'Create or update a gig' }),
@@ -163,4 +164,3 @@ export const GigsControllerSwagger = {
     }),
   ),
 };
-

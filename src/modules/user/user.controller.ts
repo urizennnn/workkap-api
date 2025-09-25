@@ -159,6 +159,7 @@ export class UserController {
 
   @Get('me')
   @NeedsAuth()
+  @Docs.getMe
   async getMe(@Req() req: Request) {
     const user = (req as AuthorizedRequest).user;
     return this.userService.getMe(user);

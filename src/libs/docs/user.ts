@@ -9,6 +9,8 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiNotFoundResponse,
+  ApiBearerAuth,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { UserType } from 'src/libs/auth';
 import { errorSchema } from './error-schema';
@@ -75,6 +77,7 @@ export const UserControllerSwagger = {
 
   subscribe: applyDecorators(
     ApiOperation({ summary: 'Subscribe to a plan' }),
+    ApiBearerAuth(),
     ApiOkResponse({
       description: 'Subscription initialized',
       schema: {
@@ -196,6 +199,7 @@ export const UserControllerSwagger = {
 
   updateUser: applyDecorators(
     ApiOperation({ summary: 'Update user details' }),
+    ApiBearerAuth(),
     ApiOkResponse({
       description: 'User updated',
       schema: {
@@ -312,6 +316,7 @@ export const UserControllerSwagger = {
 
   switchProfile: applyDecorators(
     ApiOperation({ summary: 'Switch between client and freelancer profiles' }),
+    ApiBearerAuth(),
     ApiOkResponse({
       description: 'Profile switched and new tokens issued',
       schema: {
@@ -416,6 +421,12 @@ export const UserControllerSwagger = {
 
   verifyToken: applyDecorators(
     ApiOperation({ summary: 'Verify bearer token' }),
+    ApiHeader({
+      name: 'authorization',
+      description: 'Bearer access token in the format `Bearer <token>`',
+      required: true,
+      example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    }),
     ApiOkResponse({
       description: 'Token verified successfully',
       schema: {
@@ -505,6 +516,53 @@ export const UserControllerSwagger = {
     ApiNotFoundResponse({
       description: 'Invalid or expired ticket',
       schema: errorSchema('Invalid or expired ticket'),
+    }),
+  ),
+
+  getMe: applyDecorators(
+    ApiOperation({ summary: 'Get the authenticated user profile' }),
+    ApiBearerAuth(),
+    ApiOkResponse({
+      description: 'Authenticated user profile and role-specific details',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          data: {
+            type: 'object',
+            properties: {
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  email: { type: 'string', format: 'email' },
+                  fullName: { type: 'string' },
+                  username: { type: 'string' },
+                  userType: { type: 'string', enum: Object.values(UserType) },
+                },
+              },
+              freelancer: {
+                type: 'object',
+                nullable: true,
+                description: 'Present when the user is a freelancer',
+              },
+              client: {
+                type: 'object',
+                nullable: true,
+                description: 'Present when the user is a client',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Missing or invalid authentication',
+      schema: errorSchema('Unauthorized'),
+    }),
+    ApiNotFoundResponse({
+      description: 'Authenticated user record not found',
+      schema: errorSchema('User not found'),
     }),
   ),
 };

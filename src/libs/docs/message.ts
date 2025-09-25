@@ -50,6 +50,14 @@ export const MessageSwaggerController = {
       description:
         'Whether to mark returned messages as read. Defaults to true.',
     }),
+    ApiQuery({
+      name: 'contextKey',
+      required: false,
+      type: String,
+      example: 'project-brief-42',
+      description:
+        'Optional context identifier (max 120 chars) for correlating conversations.',
+    }),
     ApiOkResponse({
       description: 'Messages retrieved.',
       schema: {
