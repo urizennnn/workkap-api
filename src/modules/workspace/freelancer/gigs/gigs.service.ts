@@ -1,4 +1,10 @@
-import { Gig, GigStatus, MediaType, OrderStatus } from '@prisma/client';
+import {
+  Gig,
+  GigStatus,
+  MediaType,
+  OrderStatus,
+  Prisma,
+} from '@prisma/client';
 import {
   Injectable,
   NotFoundException,
@@ -29,55 +35,131 @@ export class GigsService {
         });
         if (!freelancer) throw new NotFoundException('Freelancer not found');
 
-        const media = this.buildMedia(data);
-        const packages = data.package?.map((p) => ({
-          ...p,
-          totalPrice: p.totalPrice ?? p.price,
-        }));
-        const extras = data.extraServices
-          ? [
-              {
-                name: 'Additional service',
-                deliveryTime: data.extraServices.deliveryTime ?? '',
-                price: data.extraServices.extraPrice ?? 0,
-              },
-            ]
-          : undefined;
+        const packageInputEntries = data.package ?? [];
+        const hasPackageInput = data.package !== undefined;
+        const packagePayload = hasPackageInput
+          ? packageInputEntries
+              .map((p) => {
+                if (
+                  !p?.tier ||
+                  !p.name ||
+                  !p.deliveryTime ||
+                  p.price === undefined
+                ) {
+                  return null;
+                }
+                return {
+                  tier: p.tier,
+                  name: p.name,
+                  description: p.description ?? '',
+                  deliveryTime: p.deliveryTime,
+                  customAssetDesign: p.customAssetDesign ?? false,
+                  sourceFile: p.sourceFile ?? false,
+                  contentUpload: p.contentUpload ?? false,
+                  convertToHtmlCss: p.convertToHtmlCss ?? false,
+                  revisions: p.revisions ?? 0,
+                  price: p.price,
+                  totalPrice: p.totalPrice ?? p.price,
+                };
+              })
+              .filter((pkg): pkg is NonNullable<typeof pkg> => pkg !== null)
+          : [];
+        const shouldUpdatePackages =
+          hasPackageInput &&
+          (packagePayload.length > 0 || packageInputEntries.length === 0);
 
-        const questions = data.questions ?? [];
+        const extrasHasExplicitValues =
+          data.extraServices !== undefined &&
+          (data.extraServices.deliveryTime !== undefined ||
+            data.extraServices.extraPrice !== undefined);
+
+        const hasQuestionsInput = data.questions !== undefined;
+        const questionsPayload = hasQuestionsInput
+          ? (data.questions ?? []).filter(
+              (question): question is { text: string } =>
+                typeof question?.text === 'string' && question.text.length > 0,
+            )
+          : [];
+
+        const mediaPayload = this.buildMedia(data);
+        const hasMediaInput =
+          data.images !== undefined ||
+          data.video !== undefined ||
+          data.documents !== undefined;
 
         if (data.slug) {
           const existing = await tx.gig.findUnique({
             where: { slug: data.slug },
+            include: {
+              extras: true,
+            },
           });
           if (existing) {
             if (existing.userId !== freelancer.id) {
               throw new ForbiddenException('Cannot update this gig');
             }
             this.logger.info(`Updating gig with slug "${data.slug}"`);
+
+            const extrasPayload = extrasHasExplicitValues
+              ? this.buildExtrasPayload(
+                  data.extraServices,
+                  existing.extras[0],
+                )
+              : undefined;
+            const shouldUpdateExtras = extrasPayload !== undefined;
+
             return tx.gig.update({
               where: { slug: data.slug },
               data: {
-                title: data.title,
-                mainCategory: data.mainCategory,
-                subCategory: data.subCategory,
-                tools: data.tools ?? [],
-                tags: data.tags ?? [],
-                status: data.status || GigStatus.DRAFT,
-                description: data.description,
-                thirdPartyAgreement: data.thirdPartyAgreement ?? false,
-                packages: packages
-                  ? { deleteMany: {}, create: packages }
-                  : undefined,
-                extras: extras
-                  ? { deleteMany: {}, create: extras }
-                  : { deleteMany: {} },
-                questions: questions.length
-                  ? { deleteMany: {}, create: questions }
-                  : { deleteMany: {} },
-                media: media.length
-                  ? { deleteMany: {}, create: media }
-                  : { deleteMany: {} },
+                ...(data.title !== undefined ? { title: data.title } : {}),
+                ...(data.mainCategory !== undefined
+                  ? { mainCategory: data.mainCategory }
+                  : {}),
+                ...(data.subCategory !== undefined
+                  ? { subCategory: data.subCategory }
+                  : {}),
+                ...(data.tools !== undefined ? { tools: data.tools } : {}),
+                ...(data.tags !== undefined ? { tags: data.tags } : {}),
+                ...(data.status !== undefined ? { status: data.status } : {}),
+                ...(data.description !== undefined
+                  ? { description: data.description }
+                  : {}),
+                ...(data.thirdPartyAgreement !== undefined
+                  ? { thirdPartyAgreement: data.thirdPartyAgreement }
+                  : {}),
+                ...(shouldUpdatePackages
+                  ? {
+                      packages: {
+                        deleteMany: {},
+                        ...(packagePayload?.length
+                          ? { create: packagePayload }
+                          : {}),
+                      },
+                    }
+                  : {}),
+                ...(hasQuestionsInput
+                  ? questionsPayload.length
+                    ? {
+                        questions: {
+                          deleteMany: {},
+                          create: questionsPayload,
+                        },
+                      }
+                      : { questions: { deleteMany: {} } }
+                  : {}),
+                ...(hasMediaInput
+                  ? mediaPayload.length
+                    ? { media: { deleteMany: {}, create: mediaPayload } }
+                    : { media: { deleteMany: {} } }
+                  : {}),
+                ...(shouldUpdateExtras
+                  ? {
+                      extras: {
+                        deleteMany: {},
+                        create: extrasPayload,
+                      },
+                    }
+                  : {}),
               },
               include: {
                 packages: true,
@@ -91,21 +173,31 @@ export class GigsService {
 
         const slug = this.slugify.slugify(data.title ?? 'gig');
         this.logger.info(`Creating new gig with slug "${slug}"`);
+        const extrasPayload = this.buildExtrasPayload(data.extraServices);
         return tx.gig.create({
           data: {
-            title: data.title,
-            mainCategory: data.mainCategory,
-            subCategory: data.subCategory,
+            title: data.title ?? '',
+            mainCategory: data.mainCategory ?? '',
+            subCategory: data.subCategory ?? '',
             tools: data.tools ?? [],
             tags: data.tags ?? [],
-            description: data.description,
+            status: data.status ?? GigStatus.DRAFT,
+            description: data.description ?? '',
             thirdPartyAgreement: data.thirdPartyAgreement ?? false,
             slug,
             user: { connect: { id: freelancer.id } },
-            packages: packages ? { create: packages } : undefined,
-            extras: extras ? { create: extras } : undefined,
-            questions: questions.length ? { create: questions } : undefined,
-            media: media.length ? { create: media } : undefined,
+            ...(packagePayload?.length
+              ? { packages: { create: packagePayload } }
+              : {}),
+            ...(extrasPayload?.length
+              ? { extras: { create: extrasPayload } }
+              : {}),
+            ...(questionsPayload.length
+              ? { questions: { create: questionsPayload } }
+              : {}),
+            ...(hasMediaInput && mediaPayload.length
+              ? { media: { create: mediaPayload } }
+              : {}),
           },
           include: {
             packages: true,
@@ -135,22 +227,59 @@ export class GigsService {
     }
   }
 
+  private buildExtrasPayload(
+    extraServices?: GigSchemaType['extraServices'],
+    existing?: { deliveryTime: string; price: Prisma.Decimal },
+  ) {
+    if (!extraServices) {
+      return undefined;
+    }
+
+    const deliveryTime =
+      extraServices.deliveryTime ?? existing?.deliveryTime;
+    const price =
+      extraServices.extraPrice ??
+      (existing?.price !== undefined ? Number(existing.price) : undefined);
+
+    if (deliveryTime === undefined || price === undefined) {
+      return undefined;
+    }
+
+    return [
+      {
+        name: 'Additional service',
+        deliveryTime,
+        price,
+      },
+    ];
+  }
+
   private buildMedia(data: GigSchemaType) {
     const media = [] as Array<{ type: MediaType; url: string }>;
     if (data.images) {
       media.push(
-        ...data.images.map((m) => ({ type: MediaType.IMAGE, url: m.url })),
+        ...data.images
+          .filter(
+            (image): image is { url: string } =>
+              typeof image?.url === 'string' && image.url.length > 0,
+          )
+          .map((m) => ({ type: MediaType.IMAGE, url: m.url })),
       );
     }
-    if (data.video) {
+    if (data.video?.url) {
       media.push({ type: MediaType.VIDEO, url: data.video.url });
     }
     if (data.documents) {
       media.push(
-        ...data.documents.map((d) => ({
-          type: MediaType.DOCUMENT,
-          url: d.url,
-        })),
+        ...data.documents
+          .filter(
+            (document): document is { url: string } =>
+              typeof document?.url === 'string' && document.url.length > 0,
+          )
+          .map((d) => ({
+            type: MediaType.DOCUMENT,
+            url: d.url,
+          })),
       );
     }
     return media;
